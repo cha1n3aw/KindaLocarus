@@ -1,68 +1,67 @@
 package KindaLocarusApp.Models.Users;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
-@Document(collection = "Users")
+import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
+
+@Document(collection = USERS_COLLECTION_NAME)
 public class CustomUser implements UserDetails
 {
-    public CustomUser()
-    {
-
-    }
-    private @MongoId String _id;
+    private @MongoId ObjectId _id;
     @Indexed(unique = true)
     private String username; //username, unique
     private String password; //password is stored hashed
-    private List<GrantedAuthority> grantedAuthorities; //user roles: USER, ADMIN
+    private Set<GrantedAuthority> grantedAuthorities; //user roles: USER, ADMIN
 
-    public String getId()
+    public ObjectId getId()
     {
         return this._id;
     }
 
-    public void  setId(String id)
+    public void setId(ObjectId id)
     {
         this._id = id;
     }
-//
-//    private Set<String> ownedDevices; //list of imeies of owned devices
-//
-//    private String userDescription; //user description string, accessible only to admin
-//
-//    public String getUserDescription()
-//    {
-//        return userDescription;
-//    }
-//
-//    public void setUserDescription(String userDescription)
-//    {
-//        this.userDescription = userDescription;
-//    }
-//
-//    public Set<String> getOwnedDevices()
-//    {
-//        return ownedDevices;
-//    }
-//
-//    public void setOwnedDevices(Set<String> ownedDevices)
-//    {
-//        this.ownedDevices = ownedDevices;
-//    }
 
-    public void setAuthorities(List<GrantedAuthority> grantedAuthorities)
+    private Set<String> ownedDevices; //list of imeies of owned devices
+
+    private String userDescription; //user description string, accessible only to admin
+
+    public String getUserDescription()
+    {
+        return userDescription;
+    }
+
+    public void setUserDescription(String userDescription)
+    {
+        this.userDescription = userDescription;
+    }
+
+    public Set<String> getOwnedDevices()
+    {
+        return ownedDevices;
+    }
+
+    public void setOwnedDevices(Set<String> ownedDevices)
+    {
+        this.ownedDevices = ownedDevices;
+    }
+
+    public void setAuthorities(Set<GrantedAuthority> grantedAuthorities)
     {
         this.grantedAuthorities = grantedAuthorities;
     }
 
     @Override
-    public List<GrantedAuthority> getAuthorities() {
+    public Set<GrantedAuthority> getAuthorities() {
         return this.grantedAuthorities;
     }
 

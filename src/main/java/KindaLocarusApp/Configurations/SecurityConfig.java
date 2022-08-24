@@ -43,64 +43,26 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
-//        http.authorizeRequests().antMatchers("/login").permitAll()
-//                .antMatchers("/api/**").hasAuthority("ADMIN")
-//                //.hasAnyAuthority("ADMIN", "USER")
-//                //.anyRequest().authenticated()
-//                //.and().formLogin()
-//                //.loginPage("/login")
-//                //.usernameParameter("username")
-//                //.permitAll()
-//                .and()
-//                //.rememberMe().key("AbcdEfghIjklmNopQrsTuvXyz_0123456789")
-//                //.and()
-//                .logout().permitAll();
+        http
+        .formLogin(withDefaults())
+        .authorizeRequests()
+        .antMatchers("/api/users.get", "/api/users.add").hasAuthority("ADMIN")
+        .antMatchers("/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
 
-
-                http
-                .formLogin(withDefaults())
-                //.cors().disable()
-                //.csrf().disable()
-
-                //.authorizeRequests().antMatchers("/**").permitAll()
-
-
-                        .authorizeRequests()
-                        .antMatchers("/api/users.get", "/api/users.add").hasAuthority("ADMIN")
-                        .antMatchers("/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
-                .and()
+//        .authorizeRequests().antMatchers("/**").permitAll()
 //
-//
-//                        .logout(logout -> logout.logoutUrl("/logout")
-//                        .addLogoutHandler((request, response, auth) -> {
-//                            try
-//                            {
-//                                request.logout();
-//                            }
-//                            catch (ServletException e)
-//                            {
-//                                //logger.error(e.getMessage());
-//                            }
-//                        }))
-
-
-                //.authorizeRequests().antMatchers("/api/**").permitAll()
-
-                //.authorizeRequests()
-                //.antMatchers("/api/users.getCurrent")
-                //.access("hasRole('ADMIN')")
-                //.anyRequest()
-                //.permitAll()
-                //.and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
+//        .cors().disable()
+//        .csrf().disable()
+//        .and()
+//        .sessionManagement()
+//        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
+        .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
 
         http.headers().frameOptions().sameOrigin();
         http.authenticationProvider(authenticationProvider());
         return http.build();
-        /** TODO: SESSION TIMEOUTS & LOGOUT HANDLER */
+        /** TODO: SESSION TIMEOUTS */
     }
 
     @Bean

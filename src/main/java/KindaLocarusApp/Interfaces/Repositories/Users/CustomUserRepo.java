@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository;
 public interface CustomUserRepo extends MongoRepository<CustomUser, String>
 {
     //ExtendedUser findByUsername(String username);
-    CustomUser findExtendedUserById(String Id);
-    CustomUser findExtendedUserDetailsByUsername(String username);
-    CustomUser findExtendedUserBy(String username);
+    //CustomUser findCustomUserById(String Id);
+    //CustomUser findCustomUserByUsername(String username);
+    //CustomUser findExtendedUserBy(String username);
 
     //List<ExtendedUserDetails> find(Query query, Class<ExtendedUserDetails> extendedUserDetailsClass);
     //List<ExtendedUser> findAllUsersMatchingIds(List<String> userIds);
