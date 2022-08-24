@@ -11,5 +11,5 @@ public interface CustomUserService
 {
     ResponseEntity<Response<?>> getUsers(final List<String> usernames);
 //    boolean addUser(final String username, final String password, final List<String> roles, List<String> ownedDevices, String userDescription);
-    boolean addUser(CustomUser customUser);
+    String addUser(List<CustomUser> customUsers);
 }

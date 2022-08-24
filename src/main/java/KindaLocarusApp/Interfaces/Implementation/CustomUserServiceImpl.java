@@ -33,16 +33,25 @@ public class CustomUserServiceImpl implements CustomUserService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public boolean addUser(CustomUser customUser)
+    public String addUser(final List<CustomUser> customUsers)
     {
         try
         {
-            mongoTemplate.save(customUser);
-            return true;
+            /** TODO: detailed error output: which users failed */
+            int existingUsersCount = 0;
+            for (CustomUser customUser : customUsers)
+            {
+                Query query = new Query();
+                query.addCriteria(Criteria.where("username").is(customUser.getUsername()));
+                if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) mongoTemplate.insert(customUser);
+                else existingUsersCount++;
+            }
+            if (existingUsersCount > 0) return String.format("Failed to add %s user(-s), reason: user already exists", existingUsersCount);
+            else return "OK";
         }
         catch(Exception e)
         {
-            return false;
+            return String.format("Failed to add %s user(-s), reason: Internal server error", customUsers.stream().count());
         }
     }
 
@@ -59,7 +68,7 @@ public class CustomUserServiceImpl implements CustomUserService
             user.setAuthorities(grantedAuthorities);
             user.setOwnedDevices(ownedDevices);
             user.setUserDescription(description);
-            mongoTemplate.save(user);
+            mongoTemplate.insert(user);
             return true;
         }
         catch(Exception e)

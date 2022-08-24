@@ -37,21 +37,19 @@ public class CustomUserController
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mongoTemplate = mongoTemplate;
     }
-    /** TODO: access levels required */
     /** multiple parameters accepted, .../api/users.get?userId=1,2,3 OR .../api/users.get?userId=1&userId=2 */
 
     @PostMapping("/users.add")
-    public ResponseEntity<Response<?>> AddUser(@RequestBody CustomUser customUser)
+    public ResponseEntity<Response<?>> AddUser(@RequestBody List<CustomUser> customUsers)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null)
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                if (customUserService.addUser(customUser)) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.OK.value()); setResponseData("OK");}}, HttpStatus.OK);
-                else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value()); setResponseData("Internal server error");}}, HttpStatus.OK);
+                return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.OK.value()); setResponseData(customUserService.addUser(customUsers));}}, HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
     }
-
+/** TODO: add (PatchMapping)users.edit, (DeleteMapping)users.delete */
     /*@GetMapping("/users.add")
     @ResponseBody
     public ResponseEntity<Response<?>> AddUser(
