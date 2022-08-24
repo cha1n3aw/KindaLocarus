@@ -21,7 +21,7 @@ public class DeviceServiceImplementation implements DeviceService
     public ResponseEntity<Response<?>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive)
     {
         Response<List<Device>> successAns = new Response<>();
-        successAns.setResponseStatus(Integer.valueOf(HttpStatus.OK.value()));
+        successAns.setResponseStatus(HttpStatus.OK.value());
         if (returnAll)
         {
 

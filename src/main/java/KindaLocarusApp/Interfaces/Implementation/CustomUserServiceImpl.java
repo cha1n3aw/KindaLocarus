@@ -33,17 +33,11 @@ public class CustomUserServiceImpl implements CustomUserService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public boolean addUser(final String username, final String password, final List<String> roles)
+    public boolean addUser(CustomUser customUser)
     {
         try
         {
-            Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-            for (String role : roles) grantedAuthorities.add(new SimpleGrantedAuthority(role));
-            CustomUser user = new CustomUser();
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setAuthorities(grantedAuthorities);
-            mongoTemplate.save(user);
+            mongoTemplate.save(customUser);
             return true;
         }
         catch(Exception e)
@@ -51,6 +45,28 @@ public class CustomUserServiceImpl implements CustomUserService
             return false;
         }
     }
+
+    /*public boolean addUser(final String username, final String password, final List<String> roles, final List<String> devices, final String description)
+    {
+        try
+        {
+            Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
+            for (String role : roles) grantedAuthorities.add(new SimpleGrantedAuthority(role));
+            Set<String> ownedDevices = new HashSet<>(devices);
+            CustomUser user = new CustomUser();
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setAuthorities(grantedAuthorities);
+            user.setOwnedDevices(ownedDevices);
+            user.setUserDescription(description);
+            mongoTemplate.save(user);
+            return true;
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
+    }*/
 
     public ResponseEntity<Response<?>> getUsers(final List<String> usernames)
     {
@@ -60,19 +76,21 @@ public class CustomUserServiceImpl implements CustomUserService
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null)
             {
+                Set<CustomUser> customUsers = new HashSet<>();
                 for (String username : usernames)
                 {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(username));
-                    response.setResponseData(new Gson().toJson(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME)));
-                    response.setResponseStatus(Integer.valueOf(HttpStatus.OK.value()));
+                    customUsers.add(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME));
                 }
+                response.setResponseData(new Gson().toJson(customUsers));
+                response.setResponseStatus(HttpStatus.OK.value());
             }
             else throw new Exception();
         }
         catch (Exception e)
         {
-            response.setResponseStatus(Integer.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             response.setResponseData("Internal server error");
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
