@@ -1,8 +1,8 @@
-package KindaLocarusApp.Interfaces.Implementation.API;
+package KindaLocarusApp.Interfaces.Implementation;
 
-import KindaLocarusApp.Interfaces.Services.API.DeviceService;
-import KindaLocarusApp.Interfaces.Services.Users.Models.Device;
-import KindaLocarusApp.Interfaces.Services.Users.Models.Response;
+import KindaLocarusApp.Interfaces.Services.DeviceService;
+import KindaLocarusApp.Models.Device;
+import KindaLocarusApp.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

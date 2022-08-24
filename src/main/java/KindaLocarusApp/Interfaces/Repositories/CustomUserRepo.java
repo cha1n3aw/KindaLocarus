@@ -1,6 +1,6 @@
-package KindaLocarusApp.Interfaces.Repositories.Users;
+package KindaLocarusApp.Interfaces.Repositories;
 
-import KindaLocarusApp.Interfaces.Services.Users.Models.CustomUser;
+import KindaLocarusApp.Models.CustomUser;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

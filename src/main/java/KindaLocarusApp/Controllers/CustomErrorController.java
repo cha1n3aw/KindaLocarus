@@ -1,6 +1,6 @@
 package KindaLocarusApp.Controllers;
 
-import KindaLocarusApp.Models.API.Response;
+import KindaLocarusApp.Models.Response;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

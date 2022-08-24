@@ -1,4 +1,4 @@
-package KindaLocarusApp.Interfaces.Services.Users;
+package KindaLocarusApp.Interfaces.Services;
 
 public interface SecurityService
 {

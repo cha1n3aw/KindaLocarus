@@ -1,6 +1,6 @@
-package KindaLocarusApp.Interfaces.Implementation.Users;
+package KindaLocarusApp.Interfaces.Implementation;
 
-import KindaLocarusApp.Interfaces.Services.Users.Models.CustomUser;
+import KindaLocarusApp.Models.CustomUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;

@@ -1,10 +1,9 @@
 package KindaLocarusApp.Controllers;
 
-import KindaLocarusApp.Interfaces.Repositories.Users.CustomUserRepo;
-import KindaLocarusApp.Interfaces.Services.API.DeviceService;
-import KindaLocarusApp.Interfaces.Services.Users.CustomUserService;
-import KindaLocarusApp.Models.API.Response;
-import KindaLocarusApp.Models.Users.CustomUser;
+import KindaLocarusApp.Interfaces.Services.DeviceService;
+import KindaLocarusApp.Interfaces.Services.CustomUserService;
+import KindaLocarusApp.Models.CustomUser;
+import KindaLocarusApp.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -27,7 +26,6 @@ public class DevicesController
 {
     private final MongoTemplate mongoTemplate;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-//    private final CustomUserRepo extendedUserDetailsRepo;
     private final DeviceService deviceService;
     private final CustomUserService userService;
 
@@ -35,13 +33,11 @@ public class DevicesController
     @Autowired
     public DevicesController(DeviceService deviceService,
                            CustomUserService userService,
-//                               CustomUserRepo extendedUserDetailsRepo,
                            BCryptPasswordEncoder bCryptPasswordEncoder,
                            MongoTemplate mongoTemplate)
     {
         this.deviceService = deviceService;
         this.userService = userService;
-//        this.extendedUserDetailsRepo = extendedUserDetailsRepo;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mongoTemplate = mongoTemplate;
     }
@@ -59,7 +55,7 @@ public class DevicesController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Query query = new Query();
         query.addCriteria(Criteria.where("username").is(authentication.getName()));
-        CustomUser user = mongoTemplate.findOne(query, KindaLocarusApp.Models.Users.CustomUser.class, USERS_COLLECTION_NAME);
+        CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
         Set<String> devices = user.getOwnedDevices();
         devices.retainAll(imeies);
         return deviceService.getDevices(new ArrayList<>(devices), returnAll, returnActive);

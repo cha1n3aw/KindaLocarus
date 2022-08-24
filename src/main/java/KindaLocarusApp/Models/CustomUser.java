@@ -1,4 +1,4 @@
-package KindaLocarusApp.Interfaces.Services.Users.Models;
+package KindaLocarusApp.Models;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.index.Indexed;

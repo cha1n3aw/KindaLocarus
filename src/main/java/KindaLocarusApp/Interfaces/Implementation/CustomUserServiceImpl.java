@@ -1,8 +1,8 @@
-package KindaLocarusApp.Interfaces.Implementation.Users;
+package KindaLocarusApp.Interfaces.Implementation;
 
-import KindaLocarusApp.Interfaces.Services.Users.CustomUserService;
-import KindaLocarusApp.Interfaces.Services.Users.Models.CustomUser;
-import KindaLocarusApp.Interfaces.Services.Users.Models.Response;
+import KindaLocarusApp.Interfaces.Services.CustomUserService;
+import KindaLocarusApp.Models.CustomUser;
+import KindaLocarusApp.Models.Response;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
