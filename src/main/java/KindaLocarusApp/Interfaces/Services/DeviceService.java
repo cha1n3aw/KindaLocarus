@@ -1,6 +1,6 @@
 package KindaLocarusApp.Interfaces.Services.API;
 
-import KindaLocarusApp.Models.API.Response;
+import KindaLocarusApp.Interfaces.Services.Users.Models.Response;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;

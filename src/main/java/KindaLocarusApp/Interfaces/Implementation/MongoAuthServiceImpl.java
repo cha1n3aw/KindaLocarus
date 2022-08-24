@@ -1,6 +1,6 @@
 package KindaLocarusApp.Interfaces.Implementation.Users;
 
-import KindaLocarusApp.Models.Users.CustomUser;
+import KindaLocarusApp.Interfaces.Services.Users.Models.CustomUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -19,15 +19,11 @@ import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 @Service
 public class MongoAuthServiceImpl implements UserDetailsService
 {
-//    private final CustomUserRepo userRepository;
     private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public MongoAuthServiceImpl(
-//            CustomUserRepo userRepository,
-            MongoTemplate mongoTemplate)
+    public MongoAuthServiceImpl(MongoTemplate mongoTemplate)
     {
-//        this.userRepository = userRepository;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -36,7 +32,7 @@ public class MongoAuthServiceImpl implements UserDetailsService
     {
         Query query = new Query();
         query.addCriteria(Criteria.where("username").is(username));
-        CustomUser user = mongoTemplate.findOne(query, KindaLocarusApp.Models.Users.CustomUser.class, USERS_COLLECTION_NAME);
+        CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
         if (user == null) throw new UsernameNotFoundException("Incorrect username or password!");
         else
         {

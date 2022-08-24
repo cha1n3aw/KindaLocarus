@@ -1,4 +1,4 @@
-package KindaLocarusApp.Models.API;
+package KindaLocarusApp.Interfaces.Services.Users.Models;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
