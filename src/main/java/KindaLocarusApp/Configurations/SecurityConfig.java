@@ -46,7 +46,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
         http
         .formLogin(withDefaults())
         .authorizeRequests()
-        .antMatchers("/api/users.get", "/api/users.add").hasAuthority("ADMIN")
+        .antMatchers("/api/users.get", "/api/users.add", "/api/users.edit", "/api/users.delete").hasAuthority("ADMIN")
         .antMatchers("/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
 
 //        .authorizeRequests().antMatchers("/**").permitAll()

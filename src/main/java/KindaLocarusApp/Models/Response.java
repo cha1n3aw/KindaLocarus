@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 public class Response<T>
 {
     private Integer responseStatus;
+    private String responseErrorDesc;
     private T responseData;
 }

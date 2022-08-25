@@ -9,12 +9,16 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -27,59 +31,78 @@ public class CustomUserController
 
     /** Constructor based dependency injection */
     @Autowired
-    public CustomUserController(DeviceService deviceService,
-                                CustomUserService customUserService,
-                                BCryptPasswordEncoder bCryptPasswordEncoder,
-                                MongoTemplate mongoTemplate)
+    public CustomUserController(
+            DeviceService deviceService,
+            CustomUserService customUserService,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            MongoTemplate mongoTemplate)
     {
         this.deviceService = deviceService;
         this.customUserService = customUserService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mongoTemplate = mongoTemplate;
+        try
+        {
+            if (!mongoTemplate.collectionExists("Users")) mongoTemplate.createCollection(CustomUser.class);
+            if (mongoTemplate.getCollection("Users").countDocuments() == 0)
+            {
+                CustomUser admin = new CustomUser();
+                Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>(){{
+                    add(new SimpleGrantedAuthority("ADMIN"));
+                    add(new SimpleGrantedAuthority("USER"));
+                }};
+                admin.setUsername("admin");
+                admin.setPassword(bCryptPasswordEncoder.encode("admin"));
+                admin.setAuthorities(authorities);
+                mongoTemplate.insert(admin);
+            }
+        }
+        catch (Exception e)
+        {
+
+        }
     }
     /** multiple parameters accepted, .../api/users.get?userId=1,2,3 OR .../api/users.get?userId=1&userId=2 */
 
     @PostMapping("/users.add")
-    public ResponseEntity<Response<?>> AddUser(@RequestBody List<CustomUser> customUsers)
+    public ResponseEntity<Response<?>> AddUsers(@RequestBody List<CustomUser> customUsers)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null)
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.OK.value()); setResponseData(customUserService.addUser(customUsers));}}, HttpStatus.OK);
+                return new ResponseEntity<>(customUserService.addUsers(customUsers), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
     }
-/** TODO: add (PatchMapping)users.edit, (DeleteMapping)users.delete */
-    /*@GetMapping("/users.add")
-    @ResponseBody
-    public ResponseEntity<Response<?>> AddUser(
-            @RequestParam(required = true, name="name", defaultValue = "empty") String username,
-            @RequestParam(required = true, name= "password", defaultValue = "empty") String password,
-            @RequestParam(required = false, name="roles", defaultValue = "USER") List<String> roles,
-            @RequestParam(required = false, name="devices", defaultValue = "0") List<String> devices,
-            @RequestParam(required = false, name="desc", defaultValue = "") String description)
+
+    @PatchMapping("/users.edit")
+    public ResponseEntity<Response<?>> EditUsers(@RequestBody List<CustomUser> partialUpdates)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null)
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                if (customUserService.addUser(username, password, roles, devices, description)) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.OK.value()); setResponseData("OK");}}, HttpStatus.OK);
-                else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value()); setResponseData("Internal server error");}}, HttpStatus.OK);
+                return new ResponseEntity<>(customUserService.addUsers(partialUpdates), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
-    }*/
+    }
+
+    @DeleteMapping("/users.delete")
+    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="name", defaultValue = "") List<String> usernames)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null)
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(customUserService.deleteUsers(usernames), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
+    }
 
     @GetMapping("/users.getCurrent")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers()
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null)
-            return customUserService.getUsers(new ArrayList<>()
-            {
-                {
-                    add(authentication.getName());
-                }
-            });
+        if (authentication != null) return new ResponseEntity<>(customUserService.getUsers(new ArrayList<>(){{add(authentication.getName());}}), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
     }
 
@@ -90,7 +113,7 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null)
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return customUserService.getUsers(usernames);
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(customUserService.getUsers(usernames), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.OK);
     }

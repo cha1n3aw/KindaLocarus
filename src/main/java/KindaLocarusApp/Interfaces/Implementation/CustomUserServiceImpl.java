@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -26,82 +27,184 @@ import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 public class CustomUserServiceImpl implements CustomUserService
 {
     private final MongoTemplate mongoTemplate;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    public CustomUserServiceImpl(MongoTemplate mongoTemplate)
+    public CustomUserServiceImpl(
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            MongoTemplate mongoTemplate)
     {
         this.mongoTemplate = mongoTemplate;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    public String addUser(final List<CustomUser> customUsers)
+    public Response<?> addUsers(final List<CustomUser> customUsers)
     {
+        Response response = new Response();
         try
         {
-            /** TODO: detailed error output: which users failed */
-            int existingUsersCount = 0;
+            int errorsCount = 0;
+            String errorDesc = "";
             for (CustomUser customUser : customUsers)
             {
-                Query query = new Query();
-                query.addCriteria(Criteria.where("username").is(customUser.getUsername()));
-                if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) mongoTemplate.insert(customUser);
-                else existingUsersCount++;
+                try
+                {
+                    customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
+                    mongoTemplate.insert(customUser);
+                }
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to add %s, reason: %s\n", customUser.getUsername(), e.getMessage());
+                }
             }
-            if (existingUsersCount > 0) return String.format("Failed to add %s user(-s), reason: user already exists", existingUsersCount);
-            else return "OK";
+            if (errorsCount > 0)
+            {
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                errorDesc += String.format("Overall failed to add %s user(-s)", errorsCount);
+                response.setResponseErrorDesc(errorDesc);
+            }
+            else
+            {
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc("OK");
+            }
         }
         catch(Exception e)
         {
-            return String.format("Failed to add %s user(-s), reason: Internal server error", customUsers.stream().count());
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: ", e.getMessage()));
         }
+        return response;
     }
 
-    /*public boolean addUser(final String username, final String password, final List<String> roles, final List<String> devices, final String description)
+    public Response<?> deleteUsers(final List<String> usernames)
     {
+        Response response = new Response();
         try
         {
-            Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-            for (String role : roles) grantedAuthorities.add(new SimpleGrantedAuthority(role));
-            Set<String> ownedDevices = new HashSet<>(devices);
-            CustomUser user = new CustomUser();
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setAuthorities(grantedAuthorities);
-            user.setOwnedDevices(ownedDevices);
-            user.setUserDescription(description);
-            mongoTemplate.insert(user);
-            return true;
+            int errorsCount = 0;
+            String errorDesc = "";
+            for (String username : usernames)
+            {
+                try
+                {
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("username").is(username));
+                    mongoTemplate.remove(query, USERS_COLLECTION_NAME);
+                }
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to delete %s, reason: %s\n", username, e.getMessage());
+                }
+            }
+            if (errorsCount > 0)
+            {
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                errorDesc += String.format("Overall deleted %s, failed %s", usernames.stream().count() - errorsCount, errorsCount);
+                response.setResponseErrorDesc(errorDesc);
+            }
+            else
+            {
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc("OK");
+            }
         }
         catch(Exception e)
         {
-            return false;
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s", e.getMessage()));
         }
-    }*/
+        return response;
+    }
 
-    public ResponseEntity<Response<?>> getUsers(final List<String> usernames)
+    public Response<?> editUsers(final List<CustomUser> partialUpdates)
+    {
+        /** TODO: implement EDIT CURRENT (ME, MYSELF) */
+        Response response = new Response();
+        try
+        {
+            int errorsCount = 0;
+            String errorDesc = "";
+            for (CustomUser customUserUpdates : partialUpdates)
+            {
+                try
+                {
+                    /** TODO: unique USERNAME will fix those queries (get rid of 'em) */
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("username").is(customUserUpdates.getUsername()));
+                    customUserUpdates.setId(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME).getId());
+                    if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "") customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                    mongoTemplate.save(customUserUpdates);
+                }
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to edit %s, reason: %s\n", customUserUpdates.getUsername(), e.getMessage());
+                }
+            }
+            if (errorsCount > 0)
+            {
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                errorDesc += String.format("Overall edited %s, failed %s", partialUpdates.stream().count() - errorsCount, errorsCount);
+                response.setResponseErrorDesc(errorDesc);
+            }
+            else
+            {
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc("OK");
+            }
+        }
+        catch(Exception e)
+        {
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s", e.getMessage()));
+        }
+        return response;
+    }
+
+    public Response<?> getUsers(final List<String> usernames)
     {
         Response<String> response = new Response<>();
         try
         {
+            int errorsCount = 0;
+            String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null)
+            Set<CustomUser> customUsers = new HashSet<>();
+            for (String username : usernames)
             {
-                Set<CustomUser> customUsers = new HashSet<>();
-                for (String username : usernames)
+                try
                 {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(username));
                     customUsers.add(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME));
                 }
-                response.setResponseData(new Gson().toJson(customUsers));
-                response.setResponseStatus(HttpStatus.OK.value());
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to get %s, reason: %s\n", username, e.getMessage());
+                }
             }
-            else throw new Exception();
+            if (errorsCount > 0)
+            {
+                errorDesc += String.format("Overall failed to get %s users", errorsCount);
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                response.setResponseErrorDesc(errorDesc);
+            }
+            else
+            {
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc("OK");
+            }
+            response.setResponseData(new Gson().toJson(customUsers));
         }
         catch (Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseData("Internal server error");
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s", e.getMessage()));
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return response;
     }
 }

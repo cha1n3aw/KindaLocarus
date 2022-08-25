@@ -5,11 +5,11 @@ import KindaLocarusApp.Models.Response;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
-import java.util.Set;
 
 public interface CustomUserService
 {
-    ResponseEntity<Response<?>> getUsers(final List<String> usernames);
-//    boolean addUser(final String username, final String password, final List<String> roles, List<String> ownedDevices, String userDescription);
-    String addUser(List<CustomUser> customUsers);
+    Response<?> getUsers(final List<String> usernames);
+    Response<?> addUsers(final List<CustomUser> customUsers);
+    Response<?> deleteUsers(final List<String> usernames);
+    Response<?> editUsers(final List<CustomUser> customUsers);
 }
