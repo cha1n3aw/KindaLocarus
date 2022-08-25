@@ -4,6 +4,7 @@ import KindaLocarusApp.Handlers.CustomAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -43,20 +44,22 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
-        http.httpBasic().and().formLogin(withDefaults())
-        .authorizeRequests()
-        .antMatchers("/api/users.get", "/api/users.add", "/api/users.edit", "/api/users.delete").hasAuthority("ADMIN")
-        .antMatchers("/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
+        http
+                .httpBasic().and().formLogin(withDefaults())
+                .cors().and().csrf().disable()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.GET,"/api/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET,"/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
                 .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
                 .and().headers().frameOptions().sameOrigin()
                 .and().authenticationProvider(authenticationProvider())
-
-                .sessionManagement()
+                .sessionManagement().maximumSessions(2);
 ////                .expiredUrl(withDefaults())
-//                .invalidSessionUrl(withDefaults())
-                .maximumSessions(2);
+//                .invalidSessionUrl(withDefaults());
         return http.build();
-        /** TODO: SESSION TIMEOUTS */
     }
 
     @Bean

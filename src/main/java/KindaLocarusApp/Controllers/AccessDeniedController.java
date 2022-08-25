@@ -12,6 +12,6 @@ public class AccessDeniedController
     @ResponseBody
     public String AccessDenied()
     {
-        return "4EL TI V BANE";
+        return "Access denied";
     }
 }

@@ -1,5 +1,7 @@
 package KindaLocarusApp.Models;
 
+import KindaLocarusApp.Interfaces.Implementation.CustomAuthorityDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,6 +22,9 @@ public class CustomUser implements UserDetails
     private String username; //username, unique
     private String password; //password is stored hashed
     private Set<GrantedAuthority> grantedAuthorities; //user roles: USER, ADMIN
+    private Set<String> ownedDevices; //list of imeies of owned devices
+    private String userDescription; //user description string, accessible only to admin
+    private boolean accountEnabled;
 
     public ObjectId getId()
     {
@@ -30,10 +35,6 @@ public class CustomUser implements UserDetails
     {
         this._id = id;
     }
-
-    private Set<String> ownedDevices; //list of imeies of owned devices
-
-    private String userDescription; //user description string, accessible only to admin
 
     public String getUserDescription()
     {
@@ -60,8 +61,15 @@ public class CustomUser implements UserDetails
         this.grantedAuthorities = grantedAuthorities;
     }
 
+    public void setAccountEnabled(boolean isEnabled)
+    {
+        this.accountEnabled = isEnabled;
+    }
+
+    @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     @Override
-    public Set<GrantedAuthority> getAuthorities() {
+    public Set<GrantedAuthority> getAuthorities()
+    {
         return this.grantedAuthorities;
     }
 
@@ -99,8 +107,9 @@ public class CustomUser implements UserDetails
     }
 
     @Override
-    public boolean isEnabled() {
-        return false;
+    public boolean isEnabled()
+    {
+        return accountEnabled;
     }
 
     @Override

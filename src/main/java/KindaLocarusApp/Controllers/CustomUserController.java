@@ -55,6 +55,7 @@ public class CustomUserController
                 admin.setUsername("admin");
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
                 admin.setAuthorities(authorities);
+                admin.setAccountEnabled(true);
                 mongoTemplate.insert(admin);
             }
         }
