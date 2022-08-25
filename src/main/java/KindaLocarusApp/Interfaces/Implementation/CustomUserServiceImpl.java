@@ -1,8 +1,10 @@
 package KindaLocarusApp.Interfaces.Implementation;
 
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
+import KindaLocarusApp.KindaLocarusApp;
 import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Response;
+import com.mongodb.client.result.DeleteResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -12,7 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,8 +49,13 @@ public class CustomUserServiceImpl implements CustomUserService
             {
                 try
                 {
+                    /** TODO: test users.add method (correct id is inserted automatically?) */
+                    customUser.setId(null);
                     customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
-                    mongoTemplate.insert(customUser);
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("username").is(customUser.getUsername()));
+                    if (mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception("User already exists!");
+                    else mongoTemplate.insert(customUser);
                 }
                 catch (Exception e)
                 {
@@ -87,7 +96,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(username));
-                    mongoTemplate.remove(query, USERS_COLLECTION_NAME);
+                    if (!mongoTemplate.remove(query, USERS_COLLECTION_NAME).wasAcknowledged()) throw new Exception("Unable to locate such user!");
                 }
                 catch (Exception e)
                 {
@@ -130,7 +139,9 @@ public class CustomUserServiceImpl implements CustomUserService
                     /** TODO: unique USERNAME will fix those queries (get rid of 'em) */
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(customUserUpdates.getUsername()));
-                    customUserUpdates.setId(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME).getId());
+                    CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
+                    if (customUser == null) throw new Exception("Unable to locate such user!");
+                    customUserUpdates.setId(customUser.getId());
                     if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "") customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
                     mongoTemplate.save(customUserUpdates);
                 }
@@ -160,7 +171,7 @@ public class CustomUserServiceImpl implements CustomUserService
         return response;
     }
 
-    public Response<?> getUsers(final List<String> usernames)
+    public Response<?> getUsers(final List<String> usernames, final List<String> fields)
     {
         Response<Set> response = new Response<>();
         try
@@ -175,8 +186,20 @@ public class CustomUserServiceImpl implements CustomUserService
                 {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(username));
-                    /** TODO: migrate to an .exists() because findOne doesnt throw an exception */
-                    customUsers.add(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME));
+                    CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
+                    if (customUser == null) throw new Exception("Unable to locate such user!");
+                    CustomUser customNewUser = new CustomUser();
+                    /** TODO: TEST FIELDS (they're very weird) */
+                    for (String field : fields)
+                    {
+                        Method getField = customUser.getClass().getMethod("get" + StringUtils.capitalize(field));
+                        Object fieldObject = getField.invoke(customUser);
+                        Class[] methodArgs = new Class[1];
+                        methodArgs[0] = (customUser.getClass().getField(field)).getClass();
+                        Method setField = customNewUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs);
+                        setField.invoke(customUser, fieldObject);
+                    }
+                    customUsers.add(customNewUser);
                 }
                 catch (Exception e)
                 {

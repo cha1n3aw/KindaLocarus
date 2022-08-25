@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,6 +59,6 @@ public class DeviceController
         CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
         Set<String> devices = user.getOwnedDevices();
         devices.retainAll(imeies);
-        return deviceService.getDevices(new ArrayList<>(devices), returnAll, returnActive);
+        return new ResponseEntity<>(deviceService.getDevices(new ArrayList<>(devices), returnAll, returnActive), HttpStatus.OK);
     }
 }

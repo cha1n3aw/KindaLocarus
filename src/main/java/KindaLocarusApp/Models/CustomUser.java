@@ -1,6 +1,7 @@
 package KindaLocarusApp.Models;
 
 import KindaLocarusApp.Interfaces.Implementation.CustomAuthorityDeserializer;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Document(collection = USERS_COLLECTION_NAME)
 public class CustomUser implements UserDetails
 {

@@ -101,23 +101,27 @@ public class CustomUserController
 
     @GetMapping("/users.getCurrent")
     @ResponseBody
-    public ResponseEntity<Response<?>> GetUsers()
+    public ResponseEntity<Response<?>> GetUsers(@RequestParam(required = false, name="fields") List<String> fields)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            return new ResponseEntity<>(customUserService.getUsers(new ArrayList<>(){{add(authentication.getName());}}), HttpStatus.OK);
+            return new ResponseEntity<>(customUserService.getUsers(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
     }
 
     @GetMapping("/users.get")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers(
-            @RequestParam(required = true, name="usernames", defaultValue = "0") List<String> usernames)
+            @RequestParam(required = true, name="names") List<String> usernames,
+            @RequestParam(required = false, name="fields") List<String> fields)
     {
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.getUsers(usernames), HttpStatus.OK);
+                if (usernames.stream().count() != 0)
+                    return new ResponseEntity<>(customUserService.getUsers(usernames, fields), HttpStatus.OK);
+                else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseData("Bad request");}}, HttpStatus.BAD_REQUEST);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.FORBIDDEN);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
     }

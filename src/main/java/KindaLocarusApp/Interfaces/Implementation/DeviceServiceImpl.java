@@ -27,9 +27,11 @@ public class DeviceServiceImpl implements DeviceService
 
     public Response<List<Device>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive)
     {
+
         Response<List<Device>> response = new Response<>();
         try
         {
+            /*
             int errorsCount = 0;
             String errorDesc = "";
             for (String imei : imeies)
@@ -45,7 +47,7 @@ public class DeviceServiceImpl implements DeviceService
                     errorsCount++;
                     errorDesc += String.format("Failed to delete %s, reason: %s\n", username, e.getMessage());
                 }
-            }
+            }*/
         }
         catch (Exception e)
         {
