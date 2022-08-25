@@ -3,20 +3,12 @@ package KindaLocarusApp.Interfaces.Implementation;
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Response;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import org.json.JSONException;
-import org.json.JSONTokener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -183,6 +175,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("username").is(username));
+                    /** TODO: migrate to an .exists() because findOne doesnt throw an exception */
                     customUsers.add(mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME));
                 }
                 catch (Exception e)

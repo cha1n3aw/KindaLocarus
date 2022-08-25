@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
-public class DevicesController
+public class DeviceController
 {
     private final MongoTemplate mongoTemplate;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -31,10 +31,10 @@ public class DevicesController
 
     /** Constructor based dependency injection */
     @Autowired
-    public DevicesController(DeviceService deviceService,
-                           CustomUserService userService,
-                           BCryptPasswordEncoder bCryptPasswordEncoder,
-                           MongoTemplate mongoTemplate)
+    public DeviceController(DeviceService deviceService,
+                            CustomUserService userService,
+                            BCryptPasswordEncoder bCryptPasswordEncoder,
+                            MongoTemplate mongoTemplate)
     {
         this.deviceService = deviceService;
         this.userService = userService;

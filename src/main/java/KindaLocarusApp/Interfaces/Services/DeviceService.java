@@ -1,5 +1,6 @@
 package KindaLocarusApp.Interfaces.Services;
 
+import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import org.springframework.http.ResponseEntity;
 
@@ -8,7 +9,7 @@ import java.util.List;
 /**TODO implement user&machine interfaces*/
 public interface DeviceService
 {
-    ResponseEntity<Response<?>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive);
+    Response<List<Device>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive);
 
     /** TODO: update request, admin only (separated access levels needed) */
     /*
