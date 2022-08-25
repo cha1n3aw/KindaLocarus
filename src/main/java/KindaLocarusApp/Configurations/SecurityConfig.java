@@ -43,24 +43,18 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
-        http
-        .formLogin(withDefaults())
+        http.httpBasic().and().formLogin(withDefaults())
         .authorizeRequests()
         .antMatchers("/api/users.get", "/api/users.add", "/api/users.edit", "/api/users.delete").hasAuthority("ADMIN")
         .antMatchers("/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
+                .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
+                .and().headers().frameOptions().sameOrigin()
+                .and().authenticationProvider(authenticationProvider())
 
-//        .authorizeRequests().antMatchers("/**").permitAll()
-//
-//        .cors().disable()
-//        .csrf().disable()
-//        .and()
-//        .sessionManagement()
-//        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-        .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
-
-        http.headers().frameOptions().sameOrigin();
-        http.authenticationProvider(authenticationProvider());
+                .sessionManagement()
+////                .expiredUrl(withDefaults())
+//                .invalidSessionUrl(withDefaults())
+                .maximumSessions(2);
         return http.build();
         /** TODO: SESSION TIMEOUTS */
     }

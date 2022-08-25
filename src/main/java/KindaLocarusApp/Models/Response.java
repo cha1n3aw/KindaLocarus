@@ -10,4 +10,9 @@ public class Response<T>
     private Integer responseStatus;
     private String responseErrorDesc;
     private T responseData;
+
+    public void setResponseData(T responseData)
+    {
+        this.responseData = responseData;
+    }
 }

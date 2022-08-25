@@ -4,6 +4,10 @@ import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Response;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import org.json.JSONException;
+import org.json.JSONTokener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -40,7 +44,7 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> addUsers(final List<CustomUser> customUsers)
     {
-        Response response = new Response();
+        Response<?> response = new Response();
         try
         {
             int errorsCount = 0;
@@ -80,7 +84,7 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> deleteUsers(final List<String> usernames)
     {
-        Response response = new Response();
+        Response<?> response = new Response();
         try
         {
             int errorsCount = 0;
@@ -122,7 +126,7 @@ public class CustomUserServiceImpl implements CustomUserService
     public Response<?> editUsers(final List<CustomUser> partialUpdates)
     {
         /** TODO: implement EDIT CURRENT (ME, MYSELF) */
-        Response response = new Response();
+        Response<?> response = new Response();
         try
         {
             int errorsCount = 0;
@@ -166,7 +170,7 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> getUsers(final List<String> usernames)
     {
-        Response<String> response = new Response<>();
+        Response<Set> response = new Response<>();
         try
         {
             int errorsCount = 0;
@@ -198,12 +202,12 @@ public class CustomUserServiceImpl implements CustomUserService
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc("OK");
             }
-            response.setResponseData(new Gson().toJson(customUsers));
+            response.setResponseData(customUsers);
         }
         catch (Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s", e.getMessage(), e.getCause()));
         }
         return response;
     }
