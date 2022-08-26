@@ -14,11 +14,11 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Device
 {
-    private String imei;            // Серийный номер машины
-    private String type;            // Тип конфигурации прибора (должен выбираться из существующих)
-    private Boolean status;         // Состояние работоспособности лицензии (0 - блок / 1 - атив) (по-умолчанию 1) определяется автоматически сторонним сервисом
+    private String imei;
+    private String type;
+    private Boolean status;
     private Instant issueDate;
     private Instant expirationDate;
-    private String deviceDescription;         // Комментарий (не обязателен)
-    private List<String> log;       // (List<String>?) Авто-лог ключевых моментов, не доступен для модераций, кроме суперадмина.
+    private String deviceDescription;
+    private List<String> log;   
 }
