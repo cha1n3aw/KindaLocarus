@@ -57,7 +57,7 @@ public class DeviceController
         Query query = new Query();
         query.addCriteria(Criteria.where("username").is(authentication.getName()));
         CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-        Set<String> devices = user.getOwnedDevices();
+        Set<String> devices = user.getDevices();
         devices.retainAll(imeies);
         return new ResponseEntity<>(deviceService.getDevices(new ArrayList<>(devices), returnAll, returnActive), HttpStatus.OK);
     }

@@ -9,7 +9,7 @@ import java.util.List;
 /**TODO implement user&machine interfaces*/
 public interface DeviceService
 {
-    Response<List<Device>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive);
+    Response<List<Device>> getDevices(final List<String> imeies, final Boolean returnAll, final Boolean returnActive);
 
     /** TODO: update request, admin only (separated access levels needed) */
     /*

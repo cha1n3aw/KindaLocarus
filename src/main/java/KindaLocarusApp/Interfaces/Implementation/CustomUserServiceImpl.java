@@ -11,15 +11,14 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
@@ -176,7 +175,7 @@ public class CustomUserServiceImpl implements CustomUserService
         Response<Set> response = new Response<>();
         try
         {
-            int errorsCount = 0;
+            int userErrorsCount = 0;
             String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Set<CustomUser> customUsers = new HashSet<>();
@@ -188,35 +187,51 @@ public class CustomUserServiceImpl implements CustomUserService
                     query.addCriteria(Criteria.where("username").is(username));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
                     if (customUser == null) throw new Exception("Unable to locate such user!");
-                    CustomUser customNewUser = new CustomUser();
-                    /** TODO: TEST FIELDS (they're very weird) */
-                    for (String field : fields)
+                    CustomUser customTempUser = new CustomUser();
+                    if (fields != null)
                     {
-                        Method getField = customUser.getClass().getMethod("get" + StringUtils.capitalize(field));
-                        Object fieldObject = getField.invoke(customUser);
-                        Class[] methodArgs = new Class[1];
-                        methodArgs[0] = (customUser.getClass().getField(field)).getClass();
-                        Method setField = customNewUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs);
-                        setField.invoke(customUser, fieldObject);
+                        int fieldErrorsCount = 0;
+                        for (String field : fields)
+                        {
+                            try
+                            {
+                                Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
+                                Class[] methodArgs = new Class[1];
+                                if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
+                                else methodArgs[0] = fieldObject.getClass();
+                                customTempUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs).invoke(customTempUser, fieldObject);
+                            }
+                            catch (Exception e)
+                            {
+                                fieldErrorsCount++;
+                                errorDesc += String.format("Failed to get field %s for user %s, reason: %s\n", field, username, e.getMessage());
+                            }
+                        }
+                        if (fieldErrorsCount > 0)
+                        {
+                            errorDesc += String.format("Overall failed to get %s fields for user %s", fieldErrorsCount, username);
+                            response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                        }
                     }
-                    customUsers.add(customNewUser);
+                    else customTempUser = customUser;
+                    customUsers.add(customTempUser);
                 }
                 catch (Exception e)
                 {
-                    errorsCount++;
-                    errorDesc += String.format("Failed to get %s, reason: %s\n", username, e.getMessage());
+                    userErrorsCount++;
+                    errorDesc += String.format("Failed to get user %s, reason: %s\n", username, e.getMessage());
                 }
             }
-            if (errorsCount > 0)
+            if (userErrorsCount > 0)
             {
-                errorDesc += String.format("Overall failed to get %s users", errorsCount);
+                errorDesc += String.format("Overall failed to get %s users", userErrorsCount);
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc("OK");
+                response.setResponseErrorDesc(errorDesc += " OK");
             }
             response.setResponseData(customUsers);
         }

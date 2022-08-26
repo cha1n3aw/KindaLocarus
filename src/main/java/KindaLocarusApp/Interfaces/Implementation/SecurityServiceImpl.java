@@ -21,7 +21,7 @@ public class SecurityServiceImpl implements SecurityService
     }
 
     @Override
-    public boolean login(String username, String password)
+    public Boolean login(String username, String password)
     {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());

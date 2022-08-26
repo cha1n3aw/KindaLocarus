@@ -1,6 +1,7 @@
 package KindaLocarusApp.Models;
 
-import KindaLocarusApp.Interfaces.Implementation.CustomAuthorityDeserializer;
+import KindaLocarusApp.Interfaces.Implementation.CustomRolesDeserializer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bson.types.ObjectId;
@@ -23,10 +24,33 @@ public class CustomUser implements UserDetails
     @Indexed(unique = true)
     private String username; //username, unique
     private String password; //password is stored hashed
-    private Set<GrantedAuthority> grantedAuthorities; //user roles: USER, ADMIN
-    private Set<String> ownedDevices; //list of imeies of owned devices
-    private String userDescription; //user description string, accessible only to admin
-    private boolean accountEnabled;
+    private Set<GrantedAuthority> roles; //user roles: USER, ADMIN
+    private Set<String> devices; //list of imeies of owned devices
+    private String desc; //user description string, accessible only to admin
+    private Boolean accEnabled;
+    private Boolean accNonLocked;
+    private Boolean crNonExpired;
+    private Boolean accNonExpired;
+
+    public Boolean getAccountEnabled()
+    {
+        return accEnabled;
+    }
+
+    public Boolean getAccountNonLocked()
+    {
+        return accNonLocked;
+    }
+
+    public Boolean getAccountNonExpired()
+    {
+        return accNonExpired;
+    }
+
+    public Boolean getCredentialsNonExpired()
+    {
+        return crNonExpired;
+    }
 
     public ObjectId getId()
     {
@@ -38,93 +62,129 @@ public class CustomUser implements UserDetails
         this._id = id;
     }
 
-    public String getUserDescription()
+    public String getDescription()
     {
-        return userDescription;
+        return desc;
     }
 
-    public void setUserDescription(String userDescription)
+    public void setDescription(String description)
     {
-        this.userDescription = userDescription;
+        this.desc = description;
     }
 
-    public Set<String> getOwnedDevices()
+    public Set<String> getDevices()
     {
-        return ownedDevices;
+        return devices;
     }
 
-    public void setOwnedDevices(Set<String> ownedDevices)
+    public void setDevices(Object devices)
     {
-        this.ownedDevices = ownedDevices;
+        this.devices = (Set<String>) devices;
     }
 
-    public void setAuthorities(Set<GrantedAuthority> grantedAuthorities)
+    public void setAccountEnabled(Boolean isEnabled)
     {
-        this.grantedAuthorities = grantedAuthorities;
+        this.accEnabled = isEnabled;
+    }
+    public void setAccountNonLocked(Boolean isAccountNonLocked)
+    {
+        this.accNonLocked = isAccountNonLocked;
     }
 
-    public void setAccountEnabled(boolean isEnabled)
+    public void setCredentialsNonExpired(Boolean credentialsNonExpired)
     {
-        this.accountEnabled = isEnabled;
+        this.crNonExpired = credentialsNonExpired;
     }
 
-    @JsonDeserialize(using = CustomAuthorityDeserializer.class)
+    public void setAccountNonExpired(Boolean isAccountNonExpired)
+    {
+        this.accNonExpired = isAccountNonExpired;
+    }
+
+    @JsonIgnore
     @Override
     public Set<GrantedAuthority> getAuthorities()
     {
-        return this.grantedAuthorities;
+        return this.roles;
     }
 
-    @Override
-    public String getPassword() {
-        return password;
+    public void setAuthorities(Set<GrantedAuthority> authorities)
+    {
+        setRoles((Object)authorities);
     }
 
-    public void setPassword(String password) {
+    @JsonDeserialize(using = CustomRolesDeserializer.class)
+    public Object getRoles()
+    {
+        return this.roles;
+    }
+
+    public void setRoles(Object roles)
+    {
+        this.roles = (Set<GrantedAuthority>)roles;
+    }
+
+    public void setPassword(String password)
+    {
         this.password = password;
     }
 
     @Override
-    public String getUsername() {
+    public String getPassword()
+    {
+        return password;
+    }
+
+    @Override
+    public String getUsername()
+    {
         return this.username;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(String username)
+    {
         this.username = username;
     }
 
+    @JsonIgnore
     @Override
-    public boolean isAccountNonExpired() {
-        return false;
+    public boolean isAccountNonExpired()
+    {
+        return this.accNonExpired;
     }
 
+    @JsonIgnore
     @Override
-    public boolean isAccountNonLocked() {
-        return false;
+    public boolean isAccountNonLocked()
+    {
+        return this.accNonLocked;
     }
 
+    @JsonIgnore
     @Override
-    public boolean isCredentialsNonExpired() {
-        return false;
+    public boolean isCredentialsNonExpired()
+    {
+        return this.crNonExpired;
     }
 
+    @JsonIgnore
     @Override
     public boolean isEnabled()
     {
-        return accountEnabled;
+        return this.accEnabled;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         return Objects.hash(_id);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         CustomUser user = (CustomUser) o;
         return Objects.equals(username, user.username);
     }

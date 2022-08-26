@@ -25,7 +25,7 @@ public class DeviceServiceImpl implements DeviceService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Response<List<Device>> getDevices(final List<String> imeies, final boolean returnAll, final boolean returnActive)
+    public Response<List<Device>> getDevices(final List<String> imeies, final Boolean returnAll, final Boolean returnActive)
     {
 
         Response<List<Device>> response = new Response<>();

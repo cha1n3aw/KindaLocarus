@@ -48,14 +48,19 @@ public class CustomUserController
             if (mongoTemplate.getCollection("Users").countDocuments() == 0)
             {
                 CustomUser admin = new CustomUser();
-                Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>(){{
+                Set<GrantedAuthority> grantedAuthorities = new HashSet<GrantedAuthority>(){{
                     add(new SimpleGrantedAuthority("ADMIN"));
                     add(new SimpleGrantedAuthority("USER"));
                 }};
                 admin.setUsername("admin");
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
-                admin.setAuthorities(authorities);
-                admin.setAccountEnabled(true);
+                admin.setAuthorities(grantedAuthorities);
+                admin.setDescription("This is Admin account");
+//                admin.setAccountEnabled(true);
+//                admin.setAccountNonExpired(true);
+//                admin.setAccountNonLocked(true);
+//                admin.setCredentialsNonExpired(true);
+                admin.setDevices(new HashSet<>(){{add("123456789");}});
                 mongoTemplate.insert(admin);
             }
         }
@@ -89,7 +94,7 @@ public class CustomUserController
     }
 
     @DeleteMapping("/users.delete")
-    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="name", defaultValue = "") List<String> usernames)
+    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="usernames", defaultValue = "") List<String> usernames)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
@@ -112,7 +117,7 @@ public class CustomUserController
     @GetMapping("/users.get")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers(
-            @RequestParam(required = true, name="names") List<String> usernames,
+            @RequestParam(required = true, name="usernames") List<String> usernames,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
 

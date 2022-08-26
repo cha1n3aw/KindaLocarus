@@ -36,9 +36,8 @@ public class MongoAuthServiceImpl implements UserDetailsService
         if (user == null) throw new UsernameNotFoundException("Incorrect username or password!");
         else
         {
-            Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-            grantedAuthorities.addAll(user.getAuthorities());
-            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), grantedAuthorities);
+            Set<GrantedAuthority> roles = new HashSet<>((Set<GrantedAuthority>) user.getRoles());
+            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), roles);
         }
     }
 }

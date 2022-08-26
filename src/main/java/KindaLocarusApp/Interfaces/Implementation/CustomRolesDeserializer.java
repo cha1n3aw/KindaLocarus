@@ -11,11 +11,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.IOException;
 import java.util.*;
 
-public class CustomAuthorityDeserializer extends JsonDeserializer
+public class CustomRolesDeserializer extends JsonDeserializer
 {
 
     @Override
-    public Object deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException
+    public Object deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException
     {
         ObjectMapper mapper = (ObjectMapper) jp.getCodec();
         JsonNode jsonNode = mapper.readTree(jp);

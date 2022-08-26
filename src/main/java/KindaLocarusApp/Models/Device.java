@@ -15,7 +15,7 @@ public class Device
     private Integer sn = 0;
     private String imei;            // Серийный номер машины
     private String type;            // Тип конфигурации прибора (должен выбираться из существующих)
-    private boolean status;         // Состояние работоспособности лицензии (0 - блок / 1 - атив) (по-умолчанию 1) определяется автоматически сторонним сервисом
+    private Boolean status;         // Состояние работоспособности лицензии (0 - блок / 1 - атив) (по-умолчанию 1) определяется автоматически сторонним сервисом
     private Date IssueDate;
     private Date ExpirationDate;
     private String comment;         // Комментарий (не обязателен)
