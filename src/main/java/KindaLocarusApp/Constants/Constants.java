@@ -7,4 +7,5 @@ public class Constants
     public static final String DB_NAME = "SMD207";
     public static final String USERS_COLLECTION_NAME = "Users";
     public static final String DEVICES_COLLECTION_NAME = "Devices";
+    public static final String USERNAME_FIELD = "UNM";
 }

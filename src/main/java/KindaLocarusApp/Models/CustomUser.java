@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,13 +26,14 @@ import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 public class CustomUser implements UserDetails
 {
     private @MongoId ObjectId _id;
-    @Field("UNM")
+    @Field(USERNAME_FIELD)
     private String username; //username, unique
     @Field("PWD")
     private String password; //password is stored hashed
     @Field("RLS")
     private HashSet<GrantedAuthority> roles; //user roles: USER, ADMIN
     @JsonDeserialize(as = HashSet.class)
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     @Field("DVC")
     private HashSet<String> devices; //list of imeies of owned devices
     @Field("DSC")

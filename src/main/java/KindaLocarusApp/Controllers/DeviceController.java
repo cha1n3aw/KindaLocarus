@@ -55,7 +55,7 @@ public class DeviceController
 //    {
 //        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //        Query query = new Query();
-//        query.addCriteria(Criteria.where("username").is(authentication.getName()));
+//        query.addCriteria(Criteria.where(USERNAME_FIELD).is(authentication.getName()));
 //        CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
 //        Set<String> devices = user.getDevices();
 //        devices.retainAll(imeies);

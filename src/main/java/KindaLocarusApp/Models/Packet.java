@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -23,7 +25,7 @@ public class Packet
     @Field("UCH")
     private int usedChannels;
     @Field("ACH")
-    private HashSet<String> analogChannels = new HashSet<String>();
+    private Map<Integer, Integer> analogChannels = new HashMap<>();
     @Field("CRD")
     private Coordinates coordinates = new Coordinates();
     @Field("CST")

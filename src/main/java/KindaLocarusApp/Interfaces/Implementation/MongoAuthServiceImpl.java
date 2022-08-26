@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 
+import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
 @Service
@@ -31,7 +32,7 @@ public class MongoAuthServiceImpl implements UserDetailsService
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
         Query query = new Query();
-        query.addCriteria(Criteria.where("username").is(username));
+        query.addCriteria(Criteria.where(USERNAME_FIELD).is(username));
         CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
         if (user == null) throw new UsernameNotFoundException("Incorrect username or password!");
         else
