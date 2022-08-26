@@ -1,20 +1,20 @@
 package KindaLocarusApp.Interfaces.Services;
 
+import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import org.springframework.http.ResponseEntity;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
-/**TODO implement user&machine interfaces*/
 public interface DeviceService
 {
-    Response<List<Device>> getDevices(final List<String> imeies, final Boolean returnAll, final Boolean returnActive);
-
-    /** TODO: update request, admin only (separated access levels needed) */
-    /*
-    ResponseEntity<Response<?>> deleteMachines(final List<Long> imeies);
-    ResponseEntity<Response<?>> addMachines(final List<Machine> machines);
-    ResponseEntity<Answer<?>> updateMachine(final Integer sn, final Reason reason, final Machine machine);
-    */
+//    Response<?> devicesGetInfo(final List<String> imeies, final List<String> fields);
+//    Response<?> devicesGetPos(final List<String> imeies, final Instant fromTime, final Instant toTime);
+//    Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime);
+//    Response<?> devicesAdd(final List<Device> newDevices);
+//    Response<?> devicesEdit(final List<Device> updatedDevices);
+//    Response<?> devicesDelete(final List<String> imeiesToDelete);
 }

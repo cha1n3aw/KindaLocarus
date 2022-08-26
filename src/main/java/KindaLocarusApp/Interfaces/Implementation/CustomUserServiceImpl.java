@@ -6,7 +6,9 @@ import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Response;
 import com.mongodb.client.result.DeleteResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
@@ -51,15 +53,19 @@ public class CustomUserServiceImpl implements CustomUserService
                     /** TODO: test users.add method (correct id is inserted automatically?) */
                     customUser.setId(null);
                     customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
-                    Query query = new Query();
-                    query.addCriteria(Criteria.where("username").is(customUser.getUsername()));
-                    if (mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception("User already exists!");
-                    else mongoTemplate.insert(customUser);
+//                    Query query = new Query();
+//                    query.addCriteria(Criteria.where("username").is(customUser.getUsername()));
+//                    if (mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception("User already exists!");
+//                    else
+
+
+                    mongoTemplate.indexOps("Users").ensureIndex(new Index("UNM", Sort.Direction.DESC).unique());
+                    mongoTemplate.save(customUser);
                 }
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to add %s, reason: %s\n", customUser.getUsername(), e.getMessage());
+                    errorDesc += String.format("Failed to add %s, reason: %s", customUser.getUsername(), e.getMessage());
                 }
             }
             if (errorsCount > 0)
@@ -100,7 +106,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to delete %s, reason: %s\n", username, e.getMessage());
+                    errorDesc += String.format("Failed to delete %s, reason: %s", username, e.getMessage());
                 }
             }
             if (errorsCount > 0)
@@ -142,12 +148,13 @@ public class CustomUserServiceImpl implements CustomUserService
                     if (customUser == null) throw new Exception("Unable to locate such user!");
                     customUserUpdates.setId(customUser.getId());
                     if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "") customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                    /** TODO: migrate to an .update() method */
                     mongoTemplate.save(customUserUpdates);
                 }
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to edit %s, reason: %s\n", customUserUpdates.getUsername(), e.getMessage());
+                    errorDesc += String.format("Failed to edit %s, reason: %s", customUserUpdates.getUsername(), e.getMessage());
                 }
             }
             if (errorsCount > 0)
@@ -172,13 +179,13 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> getUsers(final List<String> usernames, final List<String> fields)
     {
-        Response<Set> response = new Response<>();
+        Response<HashSet> response = new Response<>();
         try
         {
             int userErrorsCount = 0;
             String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            Set<CustomUser> customUsers = new HashSet<>();
+            HashSet<CustomUser> customUsers = new HashSet<>();
             for (String username : usernames)
             {
                 try
@@ -204,7 +211,7 @@ public class CustomUserServiceImpl implements CustomUserService
                             catch (Exception e)
                             {
                                 fieldErrorsCount++;
-                                errorDesc += String.format("Failed to get field %s for user %s, reason: %s\n", field, username, e.getMessage());
+                                errorDesc += String.format("Failed to get field %s for user %s, reason: %s", field, username, e.getMessage());
                             }
                         }
                         if (fieldErrorsCount > 0)
@@ -219,7 +226,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 catch (Exception e)
                 {
                     userErrorsCount++;
-                    errorDesc += String.format("Failed to get user %s, reason: %s\n", username, e.getMessage());
+                    errorDesc += String.format("Failed to get user %s, reason: %s", username, e.getMessage());
                 }
             }
             if (userErrorsCount > 0)
@@ -231,7 +238,7 @@ public class CustomUserServiceImpl implements CustomUserService
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc(errorDesc += " OK");
+                response.setResponseErrorDesc(errorDesc += "OK");
             }
             response.setResponseData(customUsers);
         }

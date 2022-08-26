@@ -19,7 +19,7 @@ public class CustomRolesDeserializer extends JsonDeserializer
     {
         ObjectMapper mapper = (ObjectMapper) jp.getCodec();
         JsonNode jsonNode = mapper.readTree(jp);
-        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
+        HashSet<GrantedAuthority> grantedAuthorities = new HashSet<>();
 
         Iterator<JsonNode> elements = jsonNode.elements();
         while (elements.hasNext()) {

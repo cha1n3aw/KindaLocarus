@@ -48,7 +48,7 @@ public class CustomUserController
             if (mongoTemplate.getCollection("Users").countDocuments() == 0)
             {
                 CustomUser admin = new CustomUser();
-                Set<GrantedAuthority> grantedAuthorities = new HashSet<GrantedAuthority>(){{
+                HashSet<GrantedAuthority> grantedAuthorities = new HashSet<GrantedAuthority>(){{
                     add(new SimpleGrantedAuthority("ADMIN"));
                     add(new SimpleGrantedAuthority("USER"));
                 }};
@@ -88,7 +88,7 @@ public class CustomUserController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.addUsers(partialUpdates), HttpStatus.OK);
+                return new ResponseEntity<>(customUserService.editUsers(partialUpdates), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseData("Forbidden");}}, HttpStatus.FORBIDDEN);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
     }
