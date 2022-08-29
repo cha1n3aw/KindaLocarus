@@ -36,6 +36,7 @@ public class CustomUser implements UserDetails
     @Field(USERNAME_FIELD)
     private String username; //username, unique
 
+    @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Field("PWD")
     private String password; //password is stored hashed

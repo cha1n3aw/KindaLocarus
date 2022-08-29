@@ -198,11 +198,7 @@ public class CustomUserServiceImpl implements CustomUserService
             String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             HashSet<CustomUser> customUsers = new HashSet<>();
-            if (usernames == null)
-            {
-                customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
-                for (CustomUser customUser : customUsers) customUser.setPassword(null);
-            }
+            if (usernames == null) customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
             else
             {
                 for (String username : usernames)
@@ -210,33 +206,51 @@ public class CustomUserServiceImpl implements CustomUserService
                     try
                     {
                         CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
-                        customUser.setPassword(null);
                         if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
-                        CustomUser customTempUser = new CustomUser();
-                        int fieldErrorsCount = 0;
-                        if (fields != null)
+                        if (fields.contains("all")) customUsers.add(customUser);
+                        else
                         {
-                            for (String field : fields)
+                            CustomUser tempCustomUser = new CustomUser();
+                            for (Field availableField : customUser.getClass().getDeclaredFields())
                             {
-                                try
+                                if (!Objects.equals(availableField.getName(), "_id"))
                                 {
-                                    if (Objects.equals(field, "password")) throw new Exception("Password cannot be accessed", new Throwable("ACCESS_DENIED"));
-                                    Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
+                                    Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(customUser);
                                     Class[] methodArgs = new Class[1];
                                     if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
                                     else methodArgs[0] = fieldObject.getClass();
-                                    customTempUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs).invoke(customTempUser, fieldObject);
-                                }
-                                catch (Exception e)
-                                {
-                                    fieldErrorsCount++;
-                                    errorDesc += String.format("Failed to get field '%s' for user '%s', reason: '%s' : '%s' ", field, username, e.getMessage(), e.getCause());
+                                    if (fields.contains(availableField.getName())) tempCustomUser.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), methodArgs).invoke(tempCustomUser, fieldObject);
                                 }
                             }
-                            if (fieldErrorsCount > 0) totalFieldsErrorCount+=fieldErrorsCount;
+                            customUsers.add(tempCustomUser);
                         }
-                        else customTempUser = customUser;
-                        if (customTempUser != null && (fields == null || fieldErrorsCount != fields.stream().count())) customUsers.add(customTempUser);
+//                        CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
+//                        if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
+//                        CustomUser customTempUser = new CustomUser();
+//                        int fieldErrorsCount = 0;
+//                        if (fields != null)
+//                        {
+//                            for (String field : fields)
+//                            {
+//                                try
+//                                {
+//                                    if (Objects.equals(field, "password")) throw new Exception("Password cannot be accessed", new Throwable("ACCESS_DENIED"));
+//                                    Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
+//                                    Class[] methodArgs = new Class[1];
+//                                    if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
+//                                    else methodArgs[0] = fieldObject.getClass();
+//                                    customTempUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs).invoke(customTempUser, fieldObject);
+//                                }
+//                                catch (Exception e)
+//                                {
+//                                    fieldErrorsCount++;
+//                                    errorDesc += String.format("Failed to get field '%s' for user '%s', reason: '%s' : '%s' ", field, username, e.getMessage(), e.getCause());
+//                                }
+//                            }
+//                            if (fieldErrorsCount > 0) totalFieldsErrorCount+=fieldErrorsCount;
+//                        }
+//                        else customTempUser = customUser;
+//                        if (customTempUser != null && (fields == null || fieldErrorsCount != fields.stream().count())) customUsers.add(customTempUser);
                     }
                     catch (Exception e)
                     {

@@ -15,9 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static KindaLocarusApp.Constants.Constants.*;
 
@@ -39,42 +37,31 @@ public class DeviceServiceImpl implements DeviceService
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
             HashSet<Device> devices = new HashSet<>();
-            if (imeis == null) devices.addAll(mongoTemplate.findAll(Device.class, DEVICES_COLLECTION_NAME));
-            else
+            for (String imei : imeis)
             {
-                for (String imei : imeis)
+                try
                 {
-                    try
+                    Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+                    if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+                    if (fields.contains("all")) devices.add(device);
+                    else
                     {
-                        Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                        if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
                         Device tempDevice = new Device();
-                        if (fields != null)
+                        for (Field availableField : device.getClass().getDeclaredFields())
                         {
-                            int fieldErrorsCount = 0;
-                            for (String field : fields)
+                            if (!Objects.equals(availableField.getName(), "_id"))
                             {
-                                try
-                                {
-                                    Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(device);
-                                    tempDevice.getClass().getMethod("set" + StringUtils.capitalize(field), new Class[] {fieldObject.getClass()}).invoke(tempDevice, fieldObject);
-                                }
-                                catch (Exception e)
-                                {
-                                    fieldErrorsCount++;
-                                    errorDesc += String.format("Failed to fetch info on field %s for device %s, reason: %s : %s ", field, imei, e.getMessage(), e.getCause());
-                                }
+                                Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
+                                if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
                             }
-                            if (fieldErrorsCount > 0) totalFieldsErrorCount+=fieldErrorsCount;
                         }
-                        else tempDevice = device;
                         devices.add(tempDevice);
                     }
-                    catch (Exception e)
-                    {
-                        errorsCount++;
-                        errorDesc += String.format("Failed to fetch info on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
-                    }
+                }
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to fetch info on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))

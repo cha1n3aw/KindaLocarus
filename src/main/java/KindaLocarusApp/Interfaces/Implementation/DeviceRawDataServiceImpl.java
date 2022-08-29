@@ -14,13 +14,14 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
 {
     public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
     {
-
         Response<Device> response = new Response<>();
+
         return response;
     }
     public Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime)
     {
         Response<Device> response = new Response<>();
+
         return response;
     }
 }

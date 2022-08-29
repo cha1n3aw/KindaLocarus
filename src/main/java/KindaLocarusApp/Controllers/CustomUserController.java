@@ -2,9 +2,12 @@ package KindaLocarusApp.Controllers;
 
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.Models.CustomUser;
+import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -26,6 +29,7 @@ import static KindaLocarusApp.Constants.Constants.*;
 public class CustomUserController
 {
     private final CustomUserService customUserService;
+    private final MongoTemplate mongoTemplate;
 
     @Autowired
     public CustomUserController(
@@ -34,6 +38,7 @@ public class CustomUserController
             MongoTemplate mongoTemplate)
     {
         this.customUserService = customUserService;
+        this.mongoTemplate = mongoTemplate;
         try
         {
             if (!mongoTemplate.collectionExists(USERS_COLLECTION_NAME)) mongoTemplate.createCollection(CustomUser.class);
@@ -48,12 +53,12 @@ public class CustomUserController
                 admin.setUsername("admin");
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
                 admin.setAuthorities(grantedAuthorities);
-                admin.setDescription("This is Admin account");
+                admin.setDescription("This is superadmin account");
                 admin.setAccountEnabled(true);
                 admin.setAccountNonExpired(true);
                 admin.setAccountNonLocked(true);
                 admin.setCredentialsNonExpired(true);
-                admin.setDevices(new HashSet<>(){{add("ALL");}});
+                admin.setDevices(new HashSet<>(){{add("0");}});
                 mongoTemplate.insert(admin);
             }
         }
@@ -68,9 +73,8 @@ public class CustomUserController
     public ResponseEntity<Response<?>> UsersAdd(@RequestBody List<CustomUser> customUsers)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.usersAdd(customUsers), HttpStatus.OK);
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(customUserService.usersAdd(customUsers), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
@@ -79,31 +83,9 @@ public class CustomUserController
     public ResponseEntity<Response<?>> UsersEdit(@RequestBody List<CustomUser> partialUpdates)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.usersEdit(partialUpdates), HttpStatus.OK);
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(customUserService.usersEdit(partialUpdates), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
-        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/users.delete")
-    public ResponseEntity<Response<?>> UsersDelete(@RequestParam(required = true, name="usernames") List<String> usernames)
-    {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.usersDelete(usernames), HttpStatus.OK);
-            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
-        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
-    }
-
-    @GetMapping("/users.getCurrent")
-    @ResponseBody
-    public ResponseEntity<Response<?>> UsersGet(@RequestParam(required = false, name="fields") List<String> fields)
-    {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            return new ResponseEntity<>(customUserService.usersGet(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 
@@ -116,18 +98,46 @@ public class CustomUserController
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 
+    @DeleteMapping("/users.delete")
+    public ResponseEntity<Response<?>> UsersDelete(@RequestParam(required = true, name="usernames") List<String> usernames)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(customUserService.usersDelete(usernames), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
+    @GetMapping("/users.getCurrent")
+    @ResponseBody
+    public ResponseEntity<Response<?>> UsersGet(@RequestParam(required = true, name="fields", defaultValue = "") List<String> fields)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
+            if (fields == null || fields.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Fields are required");}}, HttpStatus.OK);
+            else return new ResponseEntity<>(customUserService.usersGet(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
     @GetMapping("/users.get")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers(
-            @RequestParam(required = false, name="usernames") List<String> usernames,
-            @RequestParam(required = false, name="fields") List<String> fields)
+            @RequestParam(required = true, name="usernames", defaultValue = "") List<String> usernames,
+            @RequestParam(required = true, name="fields", defaultValue = "") List<String> fields)
     {
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.usersGet(usernames, fields), HttpStatus.OK);
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
+        {
+            if (usernames == null || fields == null || usernames.stream().count() == 0 || fields.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Usernames and fields are required");}}, HttpStatus.OK);
+            List<String> requestedUsernames = new ArrayList<>();
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+            {
+                if (usernames.contains("all")) for (CustomUser customUser : mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME)) requestedUsernames.add(customUser.getUsername());
+                else requestedUsernames = usernames;
+            }
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+            return new ResponseEntity<>(customUserService.usersGet(requestedUsernames, fields), HttpStatus.OK);
+        }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 }
