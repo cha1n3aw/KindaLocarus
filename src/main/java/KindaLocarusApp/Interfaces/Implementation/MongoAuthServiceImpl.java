@@ -31,9 +31,7 @@ public class MongoAuthServiceImpl implements UserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(USERNAME_FIELD).is(username));
-        CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
+        CustomUser user = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
         if (user == null) throw new UsernameNotFoundException("Incorrect username or password!");
         else
         {

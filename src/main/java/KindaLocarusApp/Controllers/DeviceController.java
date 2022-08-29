@@ -51,7 +51,6 @@ public class DeviceController
             @RequestParam(required = true, name="imeies") List<String> imeies,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
@@ -62,24 +61,6 @@ public class DeviceController
                 devices.retainAll(imeies);
                 return new ResponseEntity<>(deviceService.devicesGetInfo(new ArrayList<>(devices), fields), HttpStatus.OK);
             }
-        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
-    /** multiple parameters accepted, .../api/devices.get?imei=1,2,3
-     * parameters all and active are not required and extend to a 0 and 1 unless specified
-     * this helps to shorten an api request */
-//    @GetMapping("/devices.get")
-//    @ResponseBody
-//    public ResponseEntity<Response<?>> GetDevices(
-//            @RequestParam(required = false, name="imei") List<String> imeies,
-//            @RequestParam(required = false, name="all", defaultValue = "0") Boolean returnAll,
-//            @RequestParam(required = false, name="active", defaultValue = "1") Boolean returnActive)
-//    {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        Query query = new Query();
-//        query.addCriteria(Criteria.where(USERNAME_FIELD).is(authentication.getName()));
-//        CustomUser user = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-//        Set<String> devices = user.getDevices();
-//        devices.retainAll(imeies);
-//        return new ResponseEntity<>(deviceService.getDevices(new ArrayList<>(devices), returnAll, returnActive), HttpStatus.OK);
-//    }
 }
