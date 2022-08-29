@@ -119,7 +119,7 @@ public class CustomUserServiceImpl implements CustomUserService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s ", e.getMessage()));
         }
         return response;
     }
@@ -139,7 +139,7 @@ public class CustomUserServiceImpl implements CustomUserService
                     /** TODO: unique USERNAME will fix those queries (get rid of 'em) */
                     Query query = Query.query(Criteria.where(ID_FIELD).is(customUserUpdates.getId()));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-                    if (customUser == null) throw new Exception("Unable to locate such user!");
+                    if (customUser == null) throw new Exception("Unable to locate such user! ");
                     /** TODO: migrate to an .update() method */
                     for (Field field : customUserUpdates.getClass().getDeclaredFields())
                     {
@@ -156,7 +156,14 @@ public class CustomUserServiceImpl implements CustomUserService
                         }
                     }
                     customUserUpdates.setId(customUser.getId());
-                    if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "") customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                    if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "")
+                        if (customUserUpdates.getPassword().length() >= 6 || customUserUpdates.getPassword().length() <=32)
+                            customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                        else
+                        {
+                            errorsCount++;
+                            errorDesc += String.format("Failed to update password: incompatible length! ");
+                        }
                     mongoTemplate.save(customUser);
                 }
                 catch (Exception e)
@@ -198,10 +205,8 @@ public class CustomUserServiceImpl implements CustomUserService
             {
                 try
                 {
-                    Query query = new Query();
-                    query.addCriteria(Criteria.where(USERNAME_FIELD).is(username));
-                    CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-                    if (customUser == null) throw new Exception("Unable to locate such user!");
+                    CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
+                    if (customUser == null) throw new Exception("Unable to locate such user! ");
                     CustomUser customTempUser = new CustomUser();
                     if (fields != null)
                     {
@@ -253,7 +258,7 @@ public class CustomUserServiceImpl implements CustomUserService
         catch (Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s", e.getMessage(), e.getCause()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
         }
         return response;
     }
