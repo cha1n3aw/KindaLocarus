@@ -87,7 +87,7 @@ public class CustomUserController
     }
 
     @DeleteMapping("/users.delete")
-    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="usernames", defaultValue = "") List<String> usernames)
+    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="usernames") List<String> usernames)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
@@ -126,9 +126,7 @@ public class CustomUserController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                if (usernames.stream().count() != 0)
-                    return new ResponseEntity<>(customUserService.getUsers(usernames, fields), HttpStatus.OK);
-                else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Bad request");}}, HttpStatus.OK);
+                return new ResponseEntity<>(customUserService.getUsers(usernames, fields), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }

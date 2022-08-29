@@ -54,6 +54,9 @@ public class CustomUserServiceImpl implements CustomUserService
                 try
                 {
                     customUser.setId(null);
+                    if (customUser.getPassword() != null && customUser.getPassword().length() >= 6 && customUser.getPassword().length() <=32)
+                        customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
+                    else throw new Exception(String.format("Incorrect password length! "), new Throwable("PASSWORD_INCOMPATIBLE"));
                     customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
                     mongoTemplate.indexOps(USERS_COLLECTION_NAME).ensureIndex(new Index(USERNAME_FIELD, Sort.Direction.DESC).unique());
                     mongoTemplate.save(customUser);
@@ -61,13 +64,13 @@ public class CustomUserServiceImpl implements CustomUserService
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to add %s, reason: %s ", customUser.getUsername(), e.getMessage());
+                    errorDesc += String.format("Failed to add '%s', reason: '%s' : '%s' ", customUser.getUsername(), e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))
             {
 
-                errorDesc += String.format("Overall failed to add %s user(-s) ", errorsCount);
+                errorDesc += String.format("Overall failed to add '%s' user(-s) ", errorsCount);
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
@@ -80,7 +83,7 @@ public class CustomUserServiceImpl implements CustomUserService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: ", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: '%s' : '%s' ", e.getMessage(), e.getCause()));
         }
         return response;
     }
@@ -97,18 +100,18 @@ public class CustomUserServiceImpl implements CustomUserService
                 try
                 {
                     Query query = Query.query(Criteria.where(USERNAME_FIELD).is(username));
-                    if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception(String.format("Unable to locate user %s! ", username), new Throwable("USER_NOTFOUND"));
+                    if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
                     mongoTemplate.findAndRemove(query, CustomUser.class);
                 }
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to delete %s, reason: %s ", username, e.getMessage());
+                    errorDesc += String.format("Failed to delete '%s', reason: '%s' : '%s' ", username, e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))
             {
-                errorDesc += String.format("Overall deleted %s, failed %s ", usernames.stream().count() - errorsCount, errorsCount);
+                errorDesc += String.format("Overall deleted '%s', failed '%s' ", usernames.stream().count() - errorsCount, errorsCount);
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
@@ -121,7 +124,7 @@ public class CustomUserServiceImpl implements CustomUserService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s ", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: '%s' : '%s' ", e.getMessage(), e.getCause()));
         }
         return response;
     }
@@ -137,9 +140,9 @@ public class CustomUserServiceImpl implements CustomUserService
             {
                 try
                 {
-                    Query query = Query.query(Criteria.where(ID_FIELD).is(customUserUpdates.getId()));
+                    Query query = Query.query(Criteria.where(USERNAME_FIELD).is(customUserUpdates.getUsername()));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-                    if (customUser == null) throw new Exception(String.format("Unable to locate user %s! ", customUserUpdates.getId()), new Throwable("USER_NOTFOUND"));
+                    if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", customUserUpdates.getUsername()), new Throwable("USER_NOTFOUND"));
                     /** TODO: migrate to an .update() method */
                     for (Field field : customUserUpdates.getClass().getDeclaredFields())
                     {
@@ -155,26 +158,21 @@ public class CustomUserServiceImpl implements CustomUserService
                             }
                         }
                     }
-                    if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "")
-                        if (customUserUpdates.getPassword().length() >= 6 || customUserUpdates.getPassword().length() <=32)
-                            customUser.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
-                        else
-                        {
-                            errorsCount++;
-                            errorDesc += String.format("Failed to update password: incompatible length! ");
-                        }
+                    if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword().length() >= 6 && customUserUpdates.getPassword().length() <=32)
+                        customUser.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                    else throw new Exception(String.format("Incorrect password length! "), new Throwable("PASSWORD_INCOMPATIBLE"));
                     mongoTemplate.save(customUser);
                 }
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to edit %s, reason: %s ", customUserUpdates.getUsername(), e.getMessage());
+                    errorDesc += String.format("Failed to edit '%s', reason: '%s' : '%s' ", customUserUpdates.getUsername(), e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))
             {
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
-                errorDesc += String.format("Overall edited %s, failed %s ", partialUpdates.stream().count() - errorsCount, errorsCount);
+                errorDesc += String.format("Overall edited '%s', failed '%s' ", partialUpdates.stream().count() - errorsCount, errorsCount);
                 response.setResponseErrorDesc(errorDesc);
             }
             else
@@ -186,7 +184,7 @@ public class CustomUserServiceImpl implements CustomUserService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s ", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: '%s' : '%s' ", e.getMessage(), e.getCause()));
         }
         return response;
     }
@@ -208,15 +206,17 @@ public class CustomUserServiceImpl implements CustomUserService
                     try
                     {
                         CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
-                        if (customUser == null) throw new Exception(String.format("Unable to locate user %s! ", username), new Throwable("USER_NOTFOUND"));
+                        customUser.setPassword(null);
+                        if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
                         CustomUser customTempUser = new CustomUser();
+                        int fieldErrorsCount = 0;
                         if (fields != null)
                         {
-                            int fieldErrorsCount = 0;
                             for (String field : fields)
                             {
                                 try
                                 {
+                                    if (Objects.equals(field, "password")) throw new Exception("Password cannot be accessed", new Throwable("ACCESS_DENIED"));
                                     Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
                                     Class[] methodArgs = new Class[1];
                                     if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
@@ -226,29 +226,24 @@ public class CustomUserServiceImpl implements CustomUserService
                                 catch (Exception e)
                                 {
                                     fieldErrorsCount++;
-                                    errorDesc += String.format("Failed to get field %s for user %s, reason: %s ", field, username, e.getMessage());
+                                    errorDesc += String.format("Failed to get field '%s' for user '%s', reason: '%s' : '%s' ", field, username, e.getMessage(), e.getCause());
                                 }
                             }
-                            if (fieldErrorsCount > 0)
-                            {
-                                totalFieldsErrorCount+=fieldErrorsCount;
-                                errorDesc += String.format("Overall failed to get %s fields for user %s ", fieldErrorsCount, username);
-                                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
-                            }
+                            if (fieldErrorsCount > 0) totalFieldsErrorCount+=fieldErrorsCount;
                         }
                         else customTempUser = customUser;
-                        customUsers.add(customTempUser);
+                        if (customTempUser != null && (fields == null || fieldErrorsCount != fields.stream().count())) customUsers.add(customTempUser);
                     }
                     catch (Exception e)
                     {
                         userErrorsCount++;
-                        errorDesc += String.format("Failed to get user %s, reason: %s ", username, e.getMessage());
+                        errorDesc += String.format("Failed to get user '%s', reason: '%s' : '%s' ", username, e.getMessage(), e.getCause());
                     }
                 }
             }
             if (!Objects.equals(errorDesc, ""))
             {
-                errorDesc += String.format("Overall failed to get %s fields for %s users ", totalFieldsErrorCount, userErrorsCount);
+                errorDesc += String.format("Overall failed to get '%s' fields for '%s' users ", totalFieldsErrorCount, userErrorsCount);
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
@@ -257,12 +252,13 @@ public class CustomUserServiceImpl implements CustomUserService
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc(null);
             }
-            response.setResponseData(customUsers);
+            if (customUsers != null && customUsers.stream().count() > 0) response.setResponseData(customUsers);
+            else response.setResponseData(null);
         }
         catch (Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: '%s' : '%s' ", e.getMessage(), e.getCause()));
         }
         return response;
     }

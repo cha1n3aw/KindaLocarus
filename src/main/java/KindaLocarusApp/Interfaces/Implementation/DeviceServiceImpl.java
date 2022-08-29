@@ -70,11 +70,7 @@ public class DeviceServiceImpl implements DeviceService
                                     errorDesc += String.format("Failed to fetch info on field %s for device %s, reason: %s : %s ", field, imei, e.getMessage(), e.getCause());
                                 }
                             }
-                            if (fieldErrorsCount > 0)
-                            {
-                                errorDesc += String.format("Overall failed to fetch info on %s fields for device %s ", fieldErrorsCount, imei);
-                                totalFieldsErrorCount+=fieldErrorsCount;
-                            }
+                            if (fieldErrorsCount > 0) totalFieldsErrorCount+=fieldErrorsCount;
                         }
                         else tempDevice = device;
                         devices.add(tempDevice);
@@ -152,7 +148,7 @@ public class DeviceServiceImpl implements DeviceService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: ", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s", e.getMessage(), e.getCause()));
         }
         return response;
     }
@@ -167,7 +163,7 @@ public class DeviceServiceImpl implements DeviceService
             {
                 try
                 {
-                    Query query = Query.query(Criteria.where(ID_FIELD).is(deviceUpdates.getId()));
+                    Query query = Query.query(Criteria.where(IMEI_FIELD).is(deviceUpdates.getDeviceImei()));
                     Device device = mongoTemplate.findOne(query, Device.class, DEVICES_COLLECTION_NAME);
                     if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
                     for (Field field : deviceUpdates.getClass().getDeclaredFields())
@@ -183,7 +179,7 @@ public class DeviceServiceImpl implements DeviceService
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to edit %s, reason: %s ", deviceUpdates.getId(), e.getMessage());
+                    errorDesc += String.format("Failed to edit %s, reason: %s : %s", deviceUpdates.getId(), e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))
@@ -201,7 +197,7 @@ public class DeviceServiceImpl implements DeviceService
         catch(Exception e)
         {
             response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s ", e.getMessage()));
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
         }
         return response;
     }
