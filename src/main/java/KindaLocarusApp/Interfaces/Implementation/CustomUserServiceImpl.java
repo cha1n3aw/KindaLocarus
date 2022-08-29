@@ -3,6 +3,7 @@ package KindaLocarusApp.Interfaces.Implementation;
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.KindaLocarusApp;
 import KindaLocarusApp.Models.CustomUser;
+import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import com.mongodb.client.result.DeleteResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 {
                     customUser.setId(null);
                     customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
-                    mongoTemplate.indexOps("Users").ensureIndex(new Index(USERNAME_FIELD, Sort.Direction.DESC).unique());
+                    mongoTemplate.indexOps(USERS_COLLECTION_NAME).ensureIndex(new Index(USERNAME_FIELD, Sort.Direction.DESC).unique());
                     mongoTemplate.save(customUser);
                 }
                 catch (Exception e)
@@ -63,16 +64,17 @@ public class CustomUserServiceImpl implements CustomUserService
                     errorDesc += String.format("Failed to add %s, reason: %s ", customUser.getUsername(), e.getMessage());
                 }
             }
-            if (errorsCount > 0)
+            if (!Objects.equals(errorDesc, ""))
             {
-                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+
                 errorDesc += String.format("Overall failed to add %s user(-s) ", errorsCount);
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc("OK");
+                response.setResponseErrorDesc(null);
             }
         }
         catch(Exception e)
@@ -95,7 +97,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 try
                 {
                     Query query = Query.query(Criteria.where(USERNAME_FIELD).is(username));
-                    if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception("Unable to locate such user! ");
+                    if (!mongoTemplate.exists(query, USERS_COLLECTION_NAME)) throw new Exception(String.format("Unable to locate user %s! ", username), new Throwable("USER_NOTFOUND"));
                     mongoTemplate.findAndRemove(query, CustomUser.class);
                 }
                 catch (Exception e)
@@ -104,16 +106,16 @@ public class CustomUserServiceImpl implements CustomUserService
                     errorDesc += String.format("Failed to delete %s, reason: %s ", username, e.getMessage());
                 }
             }
-            if (errorsCount > 0)
+            if (!Objects.equals(errorDesc, ""))
             {
-                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 errorDesc += String.format("Overall deleted %s, failed %s ", usernames.stream().count() - errorsCount, errorsCount);
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc("OK");
+                response.setResponseErrorDesc(null);
             }
         }
         catch(Exception e)
@@ -135,11 +137,9 @@ public class CustomUserServiceImpl implements CustomUserService
             {
                 try
                 {
-                    customUserUpdates.setId(null);
-                    /** TODO: unique USERNAME will fix those queries (get rid of 'em) */
                     Query query = Query.query(Criteria.where(ID_FIELD).is(customUserUpdates.getId()));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
-                    if (customUser == null) throw new Exception("Unable to locate such user! ");
+                    if (customUser == null) throw new Exception(String.format("Unable to locate user %s! ", customUserUpdates.getId()), new Throwable("USER_NOTFOUND"));
                     /** TODO: migrate to an .update() method */
                     for (Field field : customUserUpdates.getClass().getDeclaredFields())
                     {
@@ -155,10 +155,9 @@ public class CustomUserServiceImpl implements CustomUserService
                             }
                         }
                     }
-                    customUserUpdates.setId(customUser.getId());
                     if (customUserUpdates.getPassword() != null && customUserUpdates.getPassword() != "")
                         if (customUserUpdates.getPassword().length() >= 6 || customUserUpdates.getPassword().length() <=32)
-                            customUserUpdates.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
+                            customUser.setPassword(bCryptPasswordEncoder.encode(customUserUpdates.getPassword()));
                         else
                         {
                             errorsCount++;
@@ -172,7 +171,7 @@ public class CustomUserServiceImpl implements CustomUserService
                     errorDesc += String.format("Failed to edit %s, reason: %s ", customUserUpdates.getUsername(), e.getMessage());
                 }
             }
-            if (errorsCount > 0)
+            if (!Objects.equals(errorDesc, ""))
             {
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 errorDesc += String.format("Overall edited %s, failed %s ", partialUpdates.stream().count() - errorsCount, errorsCount);
@@ -181,7 +180,7 @@ public class CustomUserServiceImpl implements CustomUserService
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc("OK");
+                response.setResponseErrorDesc(null);
             }
         }
         catch(Exception e)
@@ -197,61 +196,66 @@ public class CustomUserServiceImpl implements CustomUserService
         Response<HashSet> response = new Response<>();
         try
         {
-            int userErrorsCount = 0;
+            int userErrorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             HashSet<CustomUser> customUsers = new HashSet<>();
-            for (String username : usernames)
+            if (usernames == null) customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
+            else
             {
-                try
+                for (String username : usernames)
                 {
-                    CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
-                    if (customUser == null) throw new Exception("Unable to locate such user! ");
-                    CustomUser customTempUser = new CustomUser();
-                    if (fields != null)
+                    try
                     {
-                        int fieldErrorsCount = 0;
-                        for (String field : fields)
+                        CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
+                        if (customUser == null) throw new Exception(String.format("Unable to locate user %s! ", username), new Throwable("USER_NOTFOUND"));
+                        CustomUser customTempUser = new CustomUser();
+                        if (fields != null)
                         {
-                            try
+                            int fieldErrorsCount = 0;
+                            for (String field : fields)
                             {
-                                Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
-                                Class[] methodArgs = new Class[1];
-                                if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
-                                else methodArgs[0] = fieldObject.getClass();
-                                customTempUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs).invoke(customTempUser, fieldObject);
+                                try
+                                {
+                                    Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(field), null).invoke(customUser);
+                                    Class[] methodArgs = new Class[1];
+                                    if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
+                                    else methodArgs[0] = fieldObject.getClass();
+                                    customTempUser.getClass().getMethod("set" + StringUtils.capitalize(field), methodArgs).invoke(customTempUser, fieldObject);
+                                }
+                                catch (Exception e)
+                                {
+                                    fieldErrorsCount++;
+                                    errorDesc += String.format("Failed to get field %s for user %s, reason: %s ", field, username, e.getMessage());
+                                }
                             }
-                            catch (Exception e)
+                            if (fieldErrorsCount > 0)
                             {
-                                fieldErrorsCount++;
-                                errorDesc += String.format("Failed to get field %s for user %s, reason: %s ", field, username, e.getMessage());
+                                totalFieldsErrorCount+=fieldErrorsCount;
+                                errorDesc += String.format("Overall failed to get %s fields for user %s ", fieldErrorsCount, username);
+                                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                             }
                         }
-                        if (fieldErrorsCount > 0)
-                        {
-                            errorDesc += String.format("Overall failed to get %s fields for user %s ", fieldErrorsCount, username);
-                            response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
-                        }
+                        else customTempUser = customUser;
+                        customUsers.add(customTempUser);
                     }
-                    else customTempUser = customUser;
-                    customUsers.add(customTempUser);
-                }
-                catch (Exception e)
-                {
-                    userErrorsCount++;
-                    errorDesc += String.format("Failed to get user %s, reason: %s ", username, e.getMessage());
+                    catch (Exception e)
+                    {
+                        userErrorsCount++;
+                        errorDesc += String.format("Failed to get user %s, reason: %s ", username, e.getMessage());
+                    }
                 }
             }
-            if (userErrorsCount > 0)
+            if (!Objects.equals(errorDesc, ""))
             {
-                errorDesc += String.format("Overall failed to get %s users ", userErrorsCount);
+                errorDesc += String.format("Overall failed to get %s fields for %s users ", totalFieldsErrorCount, userErrorsCount);
                 response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
                 response.setResponseErrorDesc(errorDesc);
             }
             else
             {
                 response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc(errorDesc += "OK");
+                response.setResponseErrorDesc(null);
             }
             response.setResponseData(customUsers);
         }

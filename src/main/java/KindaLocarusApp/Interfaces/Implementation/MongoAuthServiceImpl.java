@@ -32,7 +32,7 @@ public class MongoAuthServiceImpl implements UserDetailsService
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
         CustomUser user = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
-        if (user == null) throw new UsernameNotFoundException("Incorrect username or password!");
+        if (user == null) throw new UsernameNotFoundException("Incorrect username or password!", new Throwable("INCORRECT_CREDENTIALS"));
         else
         {
             HashSet<GrantedAuthority> roles = new HashSet<>((Set<GrantedAuthority>) user.getRoles());

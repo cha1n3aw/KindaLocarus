@@ -119,7 +119,7 @@ public class CustomUserController
     @GetMapping("/users.get")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers(
-            @RequestParam(required = true, name="usernames") List<String> usernames,
+            @RequestParam(required = false, name="usernames") List<String> usernames,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
 

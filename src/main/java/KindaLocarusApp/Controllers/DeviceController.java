@@ -14,9 +14,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,6 +24,8 @@ import java.util.Set;
 import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
+@RestController
+@RequestMapping("/api")
 public class DeviceController
 {
     private final MongoTemplate mongoTemplate;
@@ -48,7 +48,7 @@ public class DeviceController
     @GetMapping("/devices.getInfo")
     @ResponseBody
     public ResponseEntity<Response<?>> GetUsers(
-            @RequestParam(required = true, name="imeies") List<String> imeies,
+            @RequestParam(required = false, name="imeies") List<String> imeies,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
