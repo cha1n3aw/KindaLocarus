@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
@@ -46,21 +45,21 @@ public class DeviceController
         this.mongoTemplate = mongoTemplate;
     }
 
-    @GetMapping("/devices.getInfo")
+    @GetMapping("/devices.get")
     @ResponseBody
     public ResponseEntity<Response<?>> DevicesGet(
-            @RequestParam(required = false, name="imeies") List<String> imeies,
+            @RequestParam(required = false, name="imeis") List<String> imeis,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(deviceService.devicesGetInfo(imeies, fields), HttpStatus.OK);
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(deviceService.devicesGet(imeis, fields), HttpStatus.OK);
             else
             {
                 HashSet<String> devices = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(authentication.getName())), CustomUser.class, USERS_COLLECTION_NAME).getDevices();
-                devices.retainAll(imeies);
-                return new ResponseEntity<>(deviceService.devicesGetInfo(new ArrayList<>(devices), fields), HttpStatus.OK);
+                if (imeis != null) devices.retainAll(imeis);
+                return new ResponseEntity<>(deviceService.devicesGet(new ArrayList<>(devices), fields), HttpStatus.OK);
             }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
@@ -70,8 +69,30 @@ public class DeviceController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
                 return new ResponseEntity<>(deviceService.devicesAdd(devices), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
+    @PatchMapping("/devices.edit")
+    public ResponseEntity<Response<?>> DevicesEdit(@RequestBody List<Device> partialUpdates)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(deviceService.devicesEdit(partialUpdates), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/devices.delete")
+    public ResponseEntity<Response<?>> DevicesDelete(@RequestParam(required = true, name="imeis") List<String> imeis)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(deviceService.devicesDelete(imeis), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }

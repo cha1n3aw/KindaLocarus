@@ -7,8 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 
 import static KindaLocarusApp.Constants.Constants.DB_ADDRESS;
 import static KindaLocarusApp.Constants.Constants.MONGODB_HOSTNAME;

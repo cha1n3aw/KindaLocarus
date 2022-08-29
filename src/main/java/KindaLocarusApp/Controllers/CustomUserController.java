@@ -1,6 +1,5 @@
 package KindaLocarusApp.Controllers;
 
-import KindaLocarusApp.Interfaces.Services.DeviceService;
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Response;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static KindaLocarusApp.Constants.Constants.*;
 
@@ -71,8 +69,8 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.addUsers(customUsers), HttpStatus.OK);
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(customUserService.usersAdd(customUsers), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
@@ -82,8 +80,8 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.editUsers(partialUpdates), HttpStatus.OK);
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(customUserService.usersEdit(partialUpdates), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
@@ -93,8 +91,8 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.deleteUsers(usernames), HttpStatus.OK);
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(customUserService.usersDelete(usernames), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
@@ -105,7 +103,7 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            return new ResponseEntity<>(customUserService.getUsers(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
+            return new ResponseEntity<>(customUserService.usersGet(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 
@@ -114,7 +112,7 @@ public class CustomUserController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            return new ResponseEntity<>(customUserService.editUsers(new ArrayList<>(){{add(partialUpdate);}}), HttpStatus.OK);
+            return new ResponseEntity<>(customUserService.usersEdit(new ArrayList<>(){{add(partialUpdate);}}), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 
@@ -127,8 +125,8 @@ public class CustomUserController
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
-            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
-                return new ResponseEntity<>(customUserService.getUsers(usernames, fields), HttpStatus.OK);
+            if (authentication.getAuthorities() != null && authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(customUserService.usersGet(usernames, fields), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }

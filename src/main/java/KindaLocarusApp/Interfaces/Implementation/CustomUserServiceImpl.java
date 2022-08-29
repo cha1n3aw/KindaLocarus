@@ -42,7 +42,7 @@ public class CustomUserServiceImpl implements CustomUserService
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    public Response<?> addUsers(final List<CustomUser> customUsers)
+    public Response<?> usersAdd(final List<CustomUser> customUsers)
     {
         Response<?> response = new Response();
         try
@@ -88,7 +88,7 @@ public class CustomUserServiceImpl implements CustomUserService
         return response;
     }
 
-    public Response<?> deleteUsers(final List<String> usernames)
+    public Response<?> usersDelete(final List<String> usernames)
     {
         Response<?> response = new Response();
         try
@@ -129,7 +129,7 @@ public class CustomUserServiceImpl implements CustomUserService
         return response;
     }
 
-    public Response<?> editUsers(final List<CustomUser> partialUpdates)
+    public Response<?> usersEdit(final List<CustomUser> partialUpdates)
     {
         Response<?> response = new Response();
         try
@@ -189,7 +189,7 @@ public class CustomUserServiceImpl implements CustomUserService
         return response;
     }
 
-    public Response<?> getUsers(final List<String> usernames, final List<String> fields)
+    public Response<?> usersGet(final List<String> usernames, final List<String> fields)
     {
         Response<HashSet> response = new Response<>();
         try

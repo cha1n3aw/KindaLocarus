@@ -1,5 +1,6 @@
 package KindaLocarusApp.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import org.bson.types.ObjectId;
@@ -37,6 +38,7 @@ public class Device
     @Field("DES")
     private String deviceDescription;
 
+    @JsonIgnore
     public ObjectId getId()
     {
         return this._id;

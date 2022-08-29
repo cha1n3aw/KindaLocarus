@@ -20,7 +20,7 @@ public class CustomErrorController implements ErrorController
         Response<String> response = new Response<>();
         if (status != null) response.setResponseStatus(Integer.valueOf(status.toString()));
         else response.setResponseStatus(0);
-        response.setResponseData("An error occurred while processing your request.");
+        response.setResponseErrorDesc("An error occurred while processing your request.");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

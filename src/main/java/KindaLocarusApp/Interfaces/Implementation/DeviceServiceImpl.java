@@ -1,26 +1,21 @@
 package KindaLocarusApp.Interfaces.Implementation;
 
 import KindaLocarusApp.Interfaces.Services.DeviceService;
-import KindaLocarusApp.Models.CustomUser;
 import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.DefaultIndexOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +31,7 @@ public class DeviceServiceImpl implements DeviceService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Response<?> devicesGetInfo(final List<String> imeies, final List<String> fields)
+    public Response<?> devicesGet(final List<String> imeis, final List<String> fields)
     {
         Response<HashSet<Device>> response = new Response<>();
         try
@@ -44,10 +39,10 @@ public class DeviceServiceImpl implements DeviceService
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
             HashSet<Device> devices = new HashSet<>();
-            if (imeies == null) devices.addAll(mongoTemplate.findAll(Device.class, DEVICES_COLLECTION_NAME));
+            if (imeis == null) devices.addAll(mongoTemplate.findAll(Device.class, DEVICES_COLLECTION_NAME));
             else
             {
-                for (String imei : imeies)
+                for (String imei : imeis)
                 {
                     try
                     {
@@ -102,7 +97,7 @@ public class DeviceServiceImpl implements DeviceService
         }
         return response;
     }
-    public Response<?> devicesGetPos(final List<String> imeies, final Instant fromTime, final Instant toTime)
+    public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
     {
         Response<Device> response = new Response<>();
         return response;
@@ -171,7 +166,17 @@ public class DeviceServiceImpl implements DeviceService
                         if(!(Objects.equals(field.getName(), "_id")))
                         {
                             Object fieldObject = deviceUpdates.getClass().getMethod("get" + StringUtils.capitalize(field.getName()), null).invoke(deviceUpdates);
-                            if (fieldObject != null) device.getClass().getMethod("set" + StringUtils.capitalize(field.getName()), new Class[]{fieldObject.getClass()}).invoke(device, fieldObject);
+                            if (fieldObject != null)
+                            {
+                                try
+                                {
+                                    device.getClass().getMethod("set" + StringUtils.capitalize(field.getName()), new Class[]{fieldObject.getClass()}).invoke(device, fieldObject);
+                                }
+                                catch (Exception e)
+                                {
+                                    System.out.println("WRONG DATE");
+                                }
+                            }
                         }
                     }
                     mongoTemplate.save(device);
@@ -179,7 +184,7 @@ public class DeviceServiceImpl implements DeviceService
                 catch (Exception e)
                 {
                     errorsCount++;
-                    errorDesc += String.format("Failed to edit %s, reason: %s : %s", deviceUpdates.getId(), e.getMessage(), e.getCause());
+                    errorDesc += String.format("Failed to edit %s, reason: %s : %s", deviceUpdates.getDeviceImei(), e.getMessage(), e.getCause());
                 }
             }
             if (!Objects.equals(errorDesc, ""))
@@ -201,7 +206,7 @@ public class DeviceServiceImpl implements DeviceService
         }
         return response;
     }
-    public Response<?> devicesDelete(final List<String> imeiesToDelete)
+    public Response<?> devicesDelete(final List<String> imeisToDelete)
     {
         Response<Device> response = new Response<>();
         return response;
