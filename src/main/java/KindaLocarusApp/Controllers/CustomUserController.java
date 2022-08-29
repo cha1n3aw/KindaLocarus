@@ -25,23 +25,15 @@ import java.util.Set;
 @RequestMapping("/api")
 public class CustomUserController
 {
-    private final MongoTemplate mongoTemplate;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final DeviceService deviceService;
     private final CustomUserService customUserService;
 
-    /** Constructor based dependency injection */
     @Autowired
     public CustomUserController(
-            DeviceService deviceService,
             CustomUserService customUserService,
             BCryptPasswordEncoder bCryptPasswordEncoder,
             MongoTemplate mongoTemplate)
     {
-        this.deviceService = deviceService;
         this.customUserService = customUserService;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.mongoTemplate = mongoTemplate;
         try
         {
             if (!mongoTemplate.collectionExists("Users")) mongoTemplate.createCollection(CustomUser.class);
@@ -111,6 +103,15 @@ public class CustomUserController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
             return new ResponseEntity<>(customUserService.getUsers(new ArrayList<>(){{add(authentication.getName());}}, fields), HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
+    }
+
+    @PatchMapping("/users.editCurrent")
+    public ResponseEntity<Response<?>> EditUsers(@RequestBody CustomUser partialUpdate)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
+            return new ResponseEntity<>(customUserService.editUsers(new ArrayList<>(){{add(partialUpdate);}}), HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseData("Unauthorized");}}, HttpStatus.UNAUTHORIZED);
     }
 

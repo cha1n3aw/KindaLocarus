@@ -45,6 +45,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
         http
+                /** TODO: CHECK USER ACCESS TO getCurrent and editCurrent METHODS */
                 .httpBasic().and().formLogin(withDefaults())
                 .cors().and().csrf().disable()
                 .authorizeRequests()
@@ -53,12 +54,11 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
                 .antMatchers(HttpMethod.PATCH, "/api/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.GET,"/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
+                .antMatchers(HttpMethod.PATCH,"/api/users.editCurrent").hasAnyAuthority("USER", "ADMIN")
                 .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
                 .and().headers().frameOptions().sameOrigin()
                 .and().authenticationProvider(authenticationProvider())
                 .sessionManagement().maximumSessions(2);
-////                .expiredUrl(withDefaults())
-//                .invalidSessionUrl(withDefaults());
         return http.build();
     }
 

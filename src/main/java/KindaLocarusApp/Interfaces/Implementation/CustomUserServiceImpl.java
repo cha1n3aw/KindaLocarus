@@ -24,8 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
-import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
+import static KindaLocarusApp.Constants.Constants.*;
 
 @Service
 public class CustomUserServiceImpl implements CustomUserService
@@ -127,7 +126,6 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> editUsers(final List<CustomUser> partialUpdates)
     {
-        /** TODO: implement EDIT CURRENT (ME, MYSELF) */
         Response<?> response = new Response();
         try
         {
@@ -139,7 +137,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 {
                     customUserUpdates.setId(null);
                     /** TODO: unique USERNAME will fix those queries (get rid of 'em) */
-                    Query query = Query.query(Criteria.where(USERNAME_FIELD).is(customUserUpdates.getUsername()));
+                    Query query = Query.query(Criteria.where(ID_FIELD).is(customUserUpdates.getId()));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
                     if (customUser == null) throw new Exception("Unable to locate such user!");
                     /** TODO: migrate to an .update() method */

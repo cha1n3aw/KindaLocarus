@@ -8,4 +8,5 @@ public class Constants
     public static final String USERS_COLLECTION_NAME = "Users";
     public static final String DEVICES_COLLECTION_NAME = "Devices";
     public static final String USERNAME_FIELD = "UNM";
+    public static final String ID_FIELD = "_id";
 }
