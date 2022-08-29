@@ -3,6 +3,7 @@ package KindaLocarusApp.Controllers;
 import KindaLocarusApp.Interfaces.Services.DeviceService;
 import KindaLocarusApp.Interfaces.Services.CustomUserService;
 import KindaLocarusApp.Models.CustomUser;
+import KindaLocarusApp.Models.Device;
 import KindaLocarusApp.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -47,7 +48,7 @@ public class DeviceController
 
     @GetMapping("/devices.getInfo")
     @ResponseBody
-    public ResponseEntity<Response<?>> GetUsers(
+    public ResponseEntity<Response<?>> DevicesGet(
             @RequestParam(required = false, name="imeies") List<String> imeies,
             @RequestParam(required = false, name="fields") List<String> fields)
     {
@@ -61,6 +62,17 @@ public class DeviceController
                 devices.retainAll(imeies);
                 return new ResponseEntity<>(deviceService.devicesGetInfo(new ArrayList<>(devices), fields), HttpStatus.OK);
             }
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
+    @PostMapping("/devices.add")
+    public ResponseEntity<Response<?>> DevicesAdd(@RequestBody List<Device> devices)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
+                return new ResponseEntity<>(deviceService.devicesAdd(devices), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 }

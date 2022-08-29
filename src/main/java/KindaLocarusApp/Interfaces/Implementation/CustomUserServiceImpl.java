@@ -198,7 +198,11 @@ public class CustomUserServiceImpl implements CustomUserService
             String errorDesc = "";
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             HashSet<CustomUser> customUsers = new HashSet<>();
-            if (usernames == null) customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
+            if (usernames == null)
+            {
+                customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
+                for (CustomUser customUser : customUsers) customUser.setPassword(null);
+            }
             else
             {
                 for (String username : usernames)

@@ -1,8 +1,7 @@
 package KindaLocarusApp.Models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -11,14 +10,17 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 import java.time.Instant;
 import java.util.List;
 
+import static KindaLocarusApp.Constants.Constants.DEVICES_COLLECTION_NAME;
 import static KindaLocarusApp.Constants.Constants.IMEI_FIELD;
 
 @Data
 @NoArgsConstructor
-@Document(collection = "Devices")
+@Document(collection = DEVICES_COLLECTION_NAME)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Device
 {
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private @MongoId ObjectId _id;
     @Field(IMEI_FIELD)
     private String deviceImei;
@@ -39,7 +41,6 @@ public class Device
     {
         return this._id;
     }
-
     public void setId(ObjectId id)
     {
         this._id = id;

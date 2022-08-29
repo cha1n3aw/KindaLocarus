@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -21,52 +22,55 @@ import java.util.Set;
 import static KindaLocarusApp.Constants.Constants.USERNAME_FIELD;
 import static KindaLocarusApp.Constants.Constants.USERS_COLLECTION_NAME;
 
+@Data
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Document(collection = USERS_COLLECTION_NAME)
 public class CustomUser implements UserDetails
 {
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private @MongoId ObjectId _id;
+
+    @Getter(AccessLevel.NONE)
     @Field(USERNAME_FIELD)
     private String username; //username, unique
+
+    @Getter(AccessLevel.NONE)
     @Field("PWD")
     private String password; //password is stored hashed
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     @Field("RLS")
     private HashSet<GrantedAuthority> roles; //user roles: USER, ADMIN
+
     @JsonDeserialize(as = HashSet.class)
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+    @Setter(AccessLevel.NONE)
     @Field("DVC")
     private HashSet<String> devices; //list of imeies of owned devices
+
     @Field("DSC")
     private String description; //user description string, accessible only to admin
+
+    @Getter(AccessLevel.NONE)
     @Field("AEN")
     private Boolean accountEnabled;
+
+    @Getter(AccessLevel.NONE)
     @Field("ANL")
     private Boolean accountNonLocked;
+
+    @Getter(AccessLevel.NONE)
     @Field("CNE")
     private Boolean credentialsNonExpired;
+
+    @Getter(AccessLevel.NONE)
     @Field("ANE")
     private Boolean accountNonExpired;
 
-    public Boolean getAccountEnabled()
-    {
-        return accountEnabled;
-    }
-
-    public Boolean getAccountNonLocked()
-    {
-        return accountNonLocked;
-    }
-
-    public Boolean getAccountNonExpired()
-    {
-        return accountNonExpired;
-    }
-
-    public Boolean getCredentialsNonExpired()
-    {
-        return credentialsNonExpired;
-    }
-
+    @JsonIgnore
     public ObjectId getId()
     {
         return this._id;
@@ -77,43 +81,9 @@ public class CustomUser implements UserDetails
         this._id = id;
     }
 
-    public String getDescription()
-    {
-        return description;
-    }
-
-    public void setDescription(String description)
-    {
-        this.description = description;
-    }
-
-    public HashSet<String> getDevices()
-    {
-        return devices;
-    }
-
     public void setDevices(Object devices)
     {
         this.devices = (HashSet<String>) devices;
-    }
-
-    public void setAccountEnabled(Boolean isEnabled)
-    {
-        this.accountEnabled = isEnabled;
-    }
-    public void setAccountNonLocked(Boolean isAccountNonLocked)
-    {
-        this.accountNonLocked = isAccountNonLocked;
-    }
-
-    public void setCredentialsNonExpired(Boolean credentialsNonExpired)
-    {
-        this.credentialsNonExpired = credentialsNonExpired;
-    }
-
-    public void setAccountNonExpired(Boolean isAccountNonExpired)
-    {
-        this.accountNonExpired = isAccountNonExpired;
     }
 
     @JsonIgnore
@@ -139,11 +109,6 @@ public class CustomUser implements UserDetails
         this.roles = (HashSet<GrantedAuthority>)roles;
     }
 
-    public void setPassword(String password)
-    {
-        this.password = password;
-    }
-
     @Override
     public String getPassword()
     {
@@ -154,11 +119,6 @@ public class CustomUser implements UserDetails
     public String getUsername()
     {
         return this.username;
-    }
-
-    public void setUsername(String username)
-    {
-        this.username = username;
     }
 
     @JsonIgnore

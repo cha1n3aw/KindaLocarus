@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static KindaLocarusApp.Constants.Constants.*;
+
 @RestController
 @RequestMapping("/api")
 public class CustomUserController
@@ -36,14 +38,14 @@ public class CustomUserController
         this.customUserService = customUserService;
         try
         {
-            if (!mongoTemplate.collectionExists("Users")) mongoTemplate.createCollection(CustomUser.class);
-            if (mongoTemplate.getCollection("Users").countDocuments() == 0)
+            if (!mongoTemplate.collectionExists(USERS_COLLECTION_NAME)) mongoTemplate.createCollection(CustomUser.class);
+            if (mongoTemplate.getCollection(USERS_COLLECTION_NAME).countDocuments() == 0)
             {
                 CustomUser admin = new CustomUser();
                 HashSet<GrantedAuthority> grantedAuthorities = new HashSet<GrantedAuthority>(){{
-                    add(new SimpleGrantedAuthority("SUPERADMIN"));
-                    add(new SimpleGrantedAuthority("ADMIN"));
-                    add(new SimpleGrantedAuthority("USER"));
+                    add(new SimpleGrantedAuthority(SUPERADMIN_ROLE));
+                    add(new SimpleGrantedAuthority(ADMIN_ROLE));
+                    add(new SimpleGrantedAuthority(USER_ROLE));
                 }};
                 admin.setUsername("admin");
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
@@ -65,7 +67,7 @@ public class CustomUserController
     /** multiple parameters accepted, .../api/users.get?userId=1,2,3 OR .../api/users.get?userId=1&userId=2 */
 
     @PostMapping("/users.add")
-    public ResponseEntity<Response<?>> AddUsers(@RequestBody List<CustomUser> customUsers)
+    public ResponseEntity<Response<?>> UsersAdd(@RequestBody List<CustomUser> customUsers)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
@@ -76,7 +78,7 @@ public class CustomUserController
     }
 
     @PatchMapping("/users.edit")
-    public ResponseEntity<Response<?>> EditUsers(@RequestBody List<CustomUser> partialUpdates)
+    public ResponseEntity<Response<?>> UsersEdit(@RequestBody List<CustomUser> partialUpdates)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
@@ -87,7 +89,7 @@ public class CustomUserController
     }
 
     @DeleteMapping("/users.delete")
-    public ResponseEntity<Response<?>> DeleteUsers(@RequestParam(required = true, name="usernames") List<String> usernames)
+    public ResponseEntity<Response<?>> UsersDelete(@RequestParam(required = true, name="usernames") List<String> usernames)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
@@ -99,7 +101,7 @@ public class CustomUserController
 
     @GetMapping("/users.getCurrent")
     @ResponseBody
-    public ResponseEntity<Response<?>> GetUsers(@RequestParam(required = false, name="fields") List<String> fields)
+    public ResponseEntity<Response<?>> UsersGet(@RequestParam(required = false, name="fields") List<String> fields)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken))
