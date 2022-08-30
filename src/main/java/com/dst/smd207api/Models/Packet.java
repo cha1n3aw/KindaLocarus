@@ -1,0 +1,33 @@
+package com.dst.smd207api.Models;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
+@Data
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Packet
+{
+    @Field("TIM")
+    private Instant timestamp;
+    @Field("VLT")
+    private double measuredVoltage;
+    @Field("FLG")
+    private byte stateFlags;
+    @Field("UCH")
+    private int usedChannels;
+    @Field("ACH")
+    private Map<Integer, Integer> analogChannels = new HashMap<>();
+    @Field("CRD")
+    private Coordinates coordinates = new Coordinates();
+    @Field("CST")
+    private int gpsSatCount;
+    @Field("CGS")
+    private int glonassSatCount;
+}
