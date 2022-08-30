@@ -37,27 +37,40 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
     }
     public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
     {
-        Response<Map<String, HashSet<Packet>>> response = new Response<>();
+        Response<Map<String, Map<Instant, Coordinates>>> response = new Response<>();
         try
         {
             int errorsCount = 0;
             String errorDesc = "";
-            Map<String, HashSet<Packet>> imeiResponse = new HashMap<>();
+            Map<String, Map<Instant, Coordinates>> imeiResponse = new HashMap<>();
             for (String imei : imeis)
             {
-                HashSet<Packet> coordinates = new HashSet<>();
+                Map<Instant, Coordinates> coordinates = new HashMap<>();
                 try
                 {
-                    if (fromTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei));
-                    if (toTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").lte(toTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
-                    else if (fromTime == null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
+                    Packet packet;
+                    if (fromTime != null)
+                    {
+                        packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei);
+                        coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    }
+                    if (toTime != null)
+                    {
+                        packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                        coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    }
+                    else if (fromTime == null)
+                    {
+                        packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                        coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    }
                 }
                 catch (Exception e)
                 {
                     errorsCount++;
                     errorDesc += String.format("Failed to fetch position on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
                 }
-                if (coordinates != null && coordinates.stream().count() > 0) imeiResponse.put(imei, coordinates);
+                if (coordinates.size() > 0) imeiResponse.put(imei, coordinates);
             }
             if (!Objects.equals(errorDesc, ""))
             {
@@ -83,46 +96,46 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
     public Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime)
     {
         Response<Map<String, HashSet<Packet>>> response = new Response<>();
-        try
-        {
-            int errorsCount = 0;
-            String errorDesc = "";
-            Map<String, HashSet<Packet>> imeiResponse = new HashMap<>();
-            for (String imei : imeis)
-            {
-                HashSet<Packet> coordinates = new HashSet<>();
-                try
-                {
-                    if (fromTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei));
-                    if (toTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").lte(toTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
-                    else if (fromTime == null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
-                }
-                catch (Exception e)
-                {
-                    errorsCount++;
-                    errorDesc += String.format("Failed to fetch position on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
-                }
-                if (coordinates != null && coordinates.stream().count() > 0) imeiResponse.put(imei, coordinates);
-            }
-            if (!Objects.equals(errorDesc, ""))
-            {
-                errorDesc += String.format("Overall failed to fetch position on %s devices ", errorsCount);
-                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
-                response.setResponseErrorDesc(errorDesc);
-            }
-            else
-            {
-                response.setResponseStatus(HttpStatus.OK.value());
-                response.setResponseErrorDesc(null);
-            }
-            if (imeiResponse != null && imeiResponse.size() > 0) response.setResponseData(imeiResponse);
-            else response.setResponseData(null);
-        }
-        catch (Exception e)
-        {
-            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
-        }
+//        try
+//        {
+//            int errorsCount = 0;
+//            String errorDesc = "";
+//            Map<String, HashSet<Packet>> imeiResponse = new HashMap<>();
+//            for (String imei : imeis)
+//            {
+//                HashSet<Packet> coordinates = new HashSet<>();
+//                try
+//                {
+//                    if (fromTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei));
+//                    if (toTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").lte(toTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
+//                    else if (fromTime == null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
+//                }
+//                catch (Exception e)
+//                {
+//                    errorsCount++;
+//                    errorDesc += String.format("Failed to fetch position on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
+//                }
+//                if (coordinates != null && coordinates.stream().count() > 0) imeiResponse.put(imei, coordinates);
+//            }
+//            if (!Objects.equals(errorDesc, ""))
+//            {
+//                errorDesc += String.format("Overall failed to fetch position on %s devices ", errorsCount);
+//                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+//                response.setResponseErrorDesc(errorDesc);
+//            }
+//            else
+//            {
+//                response.setResponseStatus(HttpStatus.OK.value());
+//                response.setResponseErrorDesc(null);
+//            }
+//            if (imeiResponse != null && imeiResponse.size() > 0) response.setResponseData(imeiResponse);
+//            else response.setResponseData(null);
+//        }
+//        catch (Exception e)
+//        {
+//            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+//            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
+//        }
         return response;
     }
 }
