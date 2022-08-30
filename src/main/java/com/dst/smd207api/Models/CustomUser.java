@@ -54,7 +54,7 @@ public class CustomUser implements UserDetails
 
     @Getter(AccessLevel.NONE)
     @Field("AEN")
-    private Boolean accountEnabled;
+    private Boolean enabled;
 
     @Getter(AccessLevel.NONE)
     @Field("ANL")
@@ -107,6 +107,7 @@ public class CustomUser implements UserDetails
         this.roles = (HashSet<GrantedAuthority>)roles;
     }
 
+    @JsonIgnore
     @Override
     public String getPassword()
     {
@@ -119,32 +120,32 @@ public class CustomUser implements UserDetails
         return this.username;
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     @Override
     public boolean isAccountNonExpired()
     {
         return this.accountNonExpired;
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     @Override
     public boolean isAccountNonLocked()
     {
         return this.accountNonLocked;
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     @Override
     public boolean isCredentialsNonExpired()
     {
         return this.credentialsNonExpired;
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     @Override
     public boolean isEnabled()
     {
-        return this.accountEnabled;
+        return this.enabled;
     }
 
     @Override

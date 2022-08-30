@@ -53,7 +53,7 @@ public class CustomUserController
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
                 admin.setAuthorities(grantedAuthorities);
                 admin.setDescription("This is superadmin account");
-                admin.setAccountEnabled(true);
+                admin.setEnabled(true);
                 admin.setAccountNonExpired(true);
                 admin.setAccountNonLocked(true);
                 admin.setCredentialsNonExpired(true);

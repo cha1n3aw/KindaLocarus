@@ -209,7 +209,10 @@ public class CustomUserServiceImpl implements CustomUserService
                             {
                                 if (!Objects.equals(availableField.getName(), "_id"))
                                 {
-                                    Object fieldObject = customUser.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(customUser);
+                                    String getterPrefix;
+                                    if (Objects.equals(availableField.getType(), Boolean.class)) getterPrefix = "is";
+                                    else getterPrefix = "get";
+                                    Object fieldObject = customUser.getClass().getMethod(getterPrefix + StringUtils.capitalize(availableField.getName()), null).invoke(customUser);
                                     Class[] methodArgs = new Class[1];
                                     if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
                                     else methodArgs[0] = fieldObject.getClass();
