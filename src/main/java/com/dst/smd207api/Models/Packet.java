@@ -28,8 +28,8 @@ public class Packet
     private Map<Integer, Integer> analogChannels;
     @Field("CRD")
     private Coordinates coordinates;
-    @Field("CST")
+    @Field("GPS")
     private int gpsSatCount;
-    @Field("CGS")
+    @Field("GLS")
     private int glonassSatCount;
 }

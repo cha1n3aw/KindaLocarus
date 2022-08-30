@@ -86,7 +86,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         return response;
     }
 
-    public Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime)
+    public Response<?> devicesGetTrack(final String imei, Instant fromTime, Instant toTime)
     {
         Response<Map<String, Map<Instant, Coordinates>>> response = new Response<>();
         try
@@ -107,8 +107,13 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                         for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(1, ChronoUnit.MONTHS)).lte(toTime)), Packet.class, imei))
                             coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                     else
-                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(Instant.now().minus(1, ChronoUnit.MONTHS))), Packet.class, imei))
-                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    {
+                        Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                        if (lastPacket != null)
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(1, ChronoUnit.MONTHS))), Packet.class, imei))
+                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                        else throw new Exception("No packets were found");
+                    }
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc(null);
             }

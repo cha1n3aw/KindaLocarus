@@ -61,7 +61,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
                 .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
                 .and().headers().frameOptions().sameOrigin()
                 .and().authenticationProvider(authenticationProvider())
-                .sessionManagement().maximumSessions(2);
+                .sessionManagement().maximumSessions(5);
         return http.build();
     }
 

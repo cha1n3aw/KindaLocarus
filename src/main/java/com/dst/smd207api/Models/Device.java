@@ -26,7 +26,7 @@ public class Device
     private String deviceImei;
     @Field("PCB")
     private String pcbRevision;
-    @Field("SWW")
+    @Field("SWV")
     private String softwareVersion;
     @Field("LAC")
     private Boolean licenseActive;

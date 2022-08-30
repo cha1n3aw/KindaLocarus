@@ -10,13 +10,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Coordinates
 {
-    @Field("LN")
+    @Field("LON")
     private double lon;
-    @Field("LT")
+    @Field("LAT")
     private double lat;
-    @Field("AL")
+    @Field("ALT")
     private double alt;
-    @Field("VL")
+    @Field("VEL")
     private double velocity;
 }
 
