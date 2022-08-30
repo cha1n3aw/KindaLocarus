@@ -51,6 +51,8 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
                 .antMatchers(HttpMethod.GET,"/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
                 .antMatchers(HttpMethod.PATCH,"/api/users.editCurrent").hasAnyAuthority("USER", "ADMIN")
                 .antMatchers(HttpMethod.GET,"/api/devices.get").hasAnyAuthority("USER", "ADMIN")
+                .antMatchers(HttpMethod.GET,"/api/devices.getPos").hasAnyAuthority("USER", "ADMIN")
+                .antMatchers(HttpMethod.GET,"/api/devices.getTrack").hasAnyAuthority("USER", "ADMIN")
 
                 .antMatchers(HttpMethod.GET,"/api/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
