@@ -1,30 +1,22 @@
 package com.dst.smd207api.Interfaces.Implementation;
 
-import com.dst.smd207api.Constants.Constants;
 import com.dst.smd207api.Models.Coordinates;
-import com.dst.smd207api.Models.Device;
 import com.dst.smd207api.Models.Packet;
 import com.dst.smd207api.Models.Response;
 import com.dst.smd207api.Interfaces.Services.DeviceRawDataService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.NearQuery;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import java.awt.*;
-import java.lang.reflect.Field;
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.dst.smd207api.Constants.Constants.*;
 
 @Service
 public class DeviceRawDataServiceImpl implements DeviceRawDataService
@@ -35,6 +27,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
     {
         this.mongoTemplate = mongoTemplate;
     }
+
     public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
     {
         Response<Map<String, Map<Instant, Coordinates>>> response = new Response<>();
@@ -45,7 +38,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
             Map<String, Map<Instant, Coordinates>> imeiResponse = new HashMap<>();
             for (String imei : imeis)
             {
-                Map<Instant, Coordinates> coordinates = new HashMap<>();
+                SortedMap<Instant, Coordinates> coordinates = new TreeMap<>();
                 try
                 {
                     Packet packet;
@@ -93,49 +86,51 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         }
         return response;
     }
+
     public Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime)
     {
-        Response<Map<String, HashSet<Packet>>> response = new Response<>();
-//        try
-//        {
-//            int errorsCount = 0;
-//            String errorDesc = "";
-//            Map<String, HashSet<Packet>> imeiResponse = new HashMap<>();
-//            for (String imei : imeis)
-//            {
-//                HashSet<Packet> coordinates = new HashSet<>();
-//                try
-//                {
-//                    if (fromTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei));
-//                    if (toTime != null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").lte(toTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
-//                    else if (fromTime == null) coordinates.add(mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei));
-//                }
-//                catch (Exception e)
-//                {
-//                    errorsCount++;
-//                    errorDesc += String.format("Failed to fetch position on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause());
-//                }
-//                if (coordinates != null && coordinates.stream().count() > 0) imeiResponse.put(imei, coordinates);
-//            }
-//            if (!Objects.equals(errorDesc, ""))
-//            {
-//                errorDesc += String.format("Overall failed to fetch position on %s devices ", errorsCount);
-//                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
-//                response.setResponseErrorDesc(errorDesc);
-//            }
-//            else
-//            {
-//                response.setResponseStatus(HttpStatus.OK.value());
-//                response.setResponseErrorDesc(null);
-//            }
-//            if (imeiResponse != null && imeiResponse.size() > 0) response.setResponseData(imeiResponse);
-//            else response.setResponseData(null);
-//        }
-//        catch (Exception e)
-//        {
-//            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-//            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
-//        }
+        Response<Map<String, Map<Instant, Coordinates>>> response = new Response<>();
+        try
+        {
+            Map<String, Map<Instant, Coordinates>> imeiResponse = new HashMap<>();
+            SortedMap<Instant, Coordinates> coordinates = new TreeMap<>();
+            try
+            {
+                if (fromTime != null)
+                    if (toTime != null)
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei))
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    else
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(1, ChronoUnit.MONTHS))), Packet.class, imei))
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                else
+                    if (toTime != null)
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(1, ChronoUnit.MONTHS)).lte(toTime)), Packet.class, imei))
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    else
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(Instant.now().minus(1, ChronoUnit.MONTHS))), Packet.class, imei))
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc(null);
+            }
+            catch (Exception e)
+            {
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                response.setResponseErrorDesc(String.format("Failed to fetch track on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause()));
+                response.setResponseData(null);
+            }
+            if (coordinates.size() > 0)
+            {
+                imeiResponse.put(imei, coordinates);
+                response.setResponseData(imeiResponse);
+            }
+            else response.setResponseData(null);
+        }
+        catch (Exception e)
+        {
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
+        }
         return response;
     }
 }
