@@ -31,6 +31,30 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         this.mongoTemplate = mongoTemplate;
     }
 
+    public Boolean checkDeviceLicense(String imei) throws Exception
+    {
+        Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+        if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+        if (device.getLicenseActive())
+            if (device.getExpirationDate().isBefore(Instant.now()))
+            {
+                device.setLicenseActive(false);
+                mongoTemplate.save(device);
+                return false;
+            }
+            else return true;
+        else
+        {
+            if (device.getExpirationDate().isAfter(Instant.now()))
+            {
+                device.setLicenseActive(true);
+                mongoTemplate.save(device);
+                return true;
+            }
+            else return false;
+        }
+    }
+
     public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
     {
         Response<Map<String, Map<Instant, Object>>> response = new Response<>();
@@ -44,34 +68,26 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                 SortedMap<Instant, Object> coordinates = new TreeMap<>();
                 try
                 {
-                    Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                    if (device.getLicenseActive())
-                        if (device.getExpirationDate().isBefore(Instant.now()))
+                    if (!checkDeviceLicense(imei)) coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
+                    else
+                    {
+                        Packet packet;
+                        if (fromTime != null)
                         {
-                            device.setLicenseActive(false);
-                            mongoTemplate.save(device);
-                            coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", device.getDeviceImei()));
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei);
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
-                        else
+                        if (toTime != null)
                         {
-                            Packet packet;
-                            if (fromTime != null)
-                            {
-                                packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei);
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                            }
-                            if (toTime != null)
-                            {
-                                packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                            }
-                            else if (fromTime == null)
-                            {
-                                packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                            }
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
-                    else coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", device.getDeviceImei()));
+                        else if (fromTime == null)
+                        {
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -111,36 +127,28 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
             SortedMap<Instant, Object> coordinates = new TreeMap<>();
             try
             {
-                Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                if (device.getLicenseActive())
-                    if (device.getExpirationDate().isBefore(Instant.now()))
-                    {
-                        device.setLicenseActive(false);
-                        mongoTemplate.save(device);
-                        coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", device.getDeviceImei()));
-                    }
-                    else
-                    {
-                        if (fromTime != null)
-                            if (toTime != null)
-                                for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei))
-                                    coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                            else
-                                for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei))
-                                    coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                        else if (toTime != null)
-                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(30, ChronoUnit.DAYS)).lte(toTime)), Packet.class, imei))
+                if (!checkDeviceLicense(imei)) coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
+                else
+                {
+                    if (fromTime != null)
+                        if (toTime != null)
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei))
                                 coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         else
-                        {
-                            Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
-                            if (lastPacket != null)
-                                for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(30, ChronoUnit.DAYS))), Packet.class, imei))
-                                    coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                            else throw new Exception("No packets were found");
-                        }
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei))
+                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    else if (toTime != null)
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(30, ChronoUnit.DAYS)).lte(toTime)), Packet.class, imei))
+                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                    else
+                    {
+                        Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                        if (lastPacket != null)
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(30, ChronoUnit.DAYS))), Packet.class, imei))
+                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                        else throw new Exception("No packets were found");
                     }
-                else coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", device.getDeviceImei()));
+                }
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc(null);
             }

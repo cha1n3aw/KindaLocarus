@@ -29,61 +29,60 @@ public class DeviceServiceImpl implements DeviceService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public List<String> CheckDevicesLicenses(List<String> imeis) throws Exception
+    public Boolean checkDeviceLicense(String imei) throws Exception
     {
-        Device device;
-        List<String> activeImeis = new ArrayList<>();
-        for (String imei : imeis)
-        {
-            device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-            if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
-            if (device.getLicenseActive())
-                if (device.getExpirationDate().isBefore(Instant.now()))
-                {
-                    device.setLicenseActive(false);
-                    mongoTemplate.save(device);
-                }
-                else activeImeis.add(imei);
-            else
+        Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+        if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+        if (device.getLicenseActive())
+            if (device.getExpirationDate().isBefore(Instant.now()))
             {
-                if (device.getExpirationDate().isAfter(Instant.now()))
-                {
-                    device.setLicenseActive(true);
-                    mongoTemplate.save(device);
-                    activeImeis.add(imei);
-                }
+                device.setLicenseActive(false);
+                mongoTemplate.save(device);
+                return false;
             }
+            else return true;
+        else
+        {
+            if (device.getExpirationDate().isAfter(Instant.now()))
+            {
+                device.setLicenseActive(true);
+                mongoTemplate.save(device);
+                return true;
+            }
+            else return false;
         }
-        return activeImeis;
     }
 
     public Response<?> devicesGet(final List<String> imeis, final List<String> fields)
     {
-        Response<HashSet<Device>> response = new Response<>();
+        Response<HashSet<Object>> response = new Response<>();
         try
         {
-            List<String> activeImeis = CheckDevicesLicenses(imeis);
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
-            HashSet<Device> devices = new HashSet<>();
+            HashSet<Object> devices = new HashSet<>();
             for (String imei : imeis)
             {
                 try
                 {
-                    Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                    if (fields.contains("all")) devices.add(device);
+                    if (!checkDeviceLicense(imei)) devices.add(String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
                     else
                     {
-                        Device tempDevice = new Device();
-                        for (Field availableField : device.getClass().getDeclaredFields())
+                        Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+                        if (fields.contains("all")) devices.add(device);
+                        else
                         {
-                            if (!Objects.equals(availableField.getName(), "_id"))
+                            Device tempDevice = new Device();
+                            for (Field availableField : device.getClass().getDeclaredFields())
                             {
-                                Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
-                                if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
+                                if (!Objects.equals(availableField.getName(), "_id"))
+                                {
+                                    Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
+                                    if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
+                                }
                             }
+                            devices.add(tempDevice);
                         }
-                        devices.add(tempDevice);
                     }
                 }
                 catch (Exception e)
