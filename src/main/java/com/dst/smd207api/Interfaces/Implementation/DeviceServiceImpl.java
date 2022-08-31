@@ -221,6 +221,7 @@ public class DeviceServiceImpl implements DeviceService
     public Response<?> devicesDelete(final List<String> imeisToDelete)
     {
         Response<Device> response = new Response<>();
+        System.out.println("Deleted :)");
         return response;
     }
 
