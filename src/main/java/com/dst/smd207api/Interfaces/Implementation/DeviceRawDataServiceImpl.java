@@ -55,7 +55,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         }
     }
 
-    public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
+    public Response<?> devicesGetPos(final List<String> imeis, final String mode, final Instant fromTime, final Instant toTime)
     {
         Response<Map<String, Map<Instant, Object>>> response = new Response<>();
         try
@@ -75,17 +75,20 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                         if (fromTime != null)
                         {
                             packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei);
-                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                            else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                         if (toTime != null)
                         {
                             packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
-                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                            else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                         else if (fromTime == null)
                         {
                             packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
-                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                            else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                     }
                 }
@@ -118,7 +121,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         return response;
     }
 
-    public Response<?> devicesGetTrack(final String imei, Instant fromTime, Instant toTime)
+    public Response<?> devicesGetTrack(final String imei, final String mode, Instant fromTime, Instant toTime)
     {
         Response<Map<String, Map<Instant, Object>>> response = new Response<>();
         try
@@ -133,19 +136,31 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                     if (fromTime != null)
                         if (toTime != null)
                             for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei))
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            {
+                                if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                                else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            }
                         else
                             for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei))
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            {
+                                if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                                else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            }
                     else if (toTime != null)
                         for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(30, ChronoUnit.DAYS)).lte(toTime)), Packet.class, imei))
-                            coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                        {
+                            if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                            else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                        }
                     else
                     {
                         Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
                         if (lastPacket != null)
                             for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(30, ChronoUnit.DAYS))), Packet.class, imei))
-                                coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            {
+                                if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
+                                else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
+                            }
                         else throw new Exception("No packets were found");
                     }
                 }

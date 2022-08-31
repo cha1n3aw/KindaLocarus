@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface DeviceRawDataService
 {
-    Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime);
-    Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime);
+    Response<?> devicesGetPos(final List<String> imeis, final String mode, final Instant fromTime, final Instant toTime);
+    Response<?> devicesGetTrack(final String imei, final String mode, final Instant fromTime, final Instant toTime);
 }
