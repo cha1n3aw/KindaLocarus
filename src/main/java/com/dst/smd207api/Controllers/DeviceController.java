@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +97,23 @@ public class DeviceController
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(deviceService.devicesDelete(imeis), HttpStatus.OK);
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+        else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
+    }
+
+    @GetMapping("/devices.prolongLicense")
+    @ResponseBody
+    public ResponseEntity<Response<?>> DevicesProlongLicense(
+            @RequestParam(required = true, name="imeis", defaultValue = "") List<String> imeis,
+            @RequestParam(required = true, name="issueDate", defaultValue = "") Instant issueDate,
+            @RequestParam(required = true, name="expirationDate", defaultValue = "") Instant expirationDate)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
+        {
+            if (imeis == null || issueDate == null || expirationDate == null || imeis.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("IMEIs and dates are required");}}, HttpStatus.OK);
+            if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN"))) return new ResponseEntity<>(deviceService.devicesProlongLicense(imeis, issueDate, expirationDate), HttpStatus.OK);
+            else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
+        }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
 }

@@ -164,8 +164,7 @@ public class DeviceServiceImpl implements DeviceService
             {
                 try
                 {
-                    Query query = Query.query(Criteria.where(IMEI_FIELD).is(deviceUpdates.getDeviceImei()));
-                    Device device = mongoTemplate.findOne(query, Device.class, DEVICES_COLLECTION_NAME);
+                    Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(deviceUpdates.getDeviceImei())), Device.class, DEVICES_COLLECTION_NAME);
                     if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
                     for (Field field : deviceUpdates.getClass().getDeclaredFields())
                     {
@@ -215,6 +214,67 @@ public class DeviceServiceImpl implements DeviceService
     public Response<?> devicesDelete(final List<String> imeisToDelete)
     {
         Response<Device> response = new Response<>();
+        return response;
+    }
+
+    public Response<?> devicesProlongLicense(final List<String> imeis, Instant issueDate, Instant expirationDate)
+    {
+        Response<String> response = new Response<>();
+        String errorDesc = "";
+        int modifiedCount = 0;
+        try
+        {
+            if (imeis.contains("all"))
+                for (Device device : mongoTemplate.findAll(Device.class, DEVICES_COLLECTION_NAME))
+                {
+                    device.setIssueDate(issueDate);
+                    device.setExpirationDate(expirationDate);
+                    if (issueDate.isBefore(expirationDate)) device.setLicenseActive(true);
+                    else device.setLicenseActive(false);
+                    mongoTemplate.save(device);
+                }
+            else
+            {
+                for (String imei : imeis)
+                {
+                    try
+                    {
+                        Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+                        if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+                        else
+                        {
+                            device.setIssueDate(issueDate);
+                            device.setExpirationDate(expirationDate);
+                            if (issueDate.isBefore(expirationDate)) device.setLicenseActive(true);
+                            else device.setLicenseActive(false);
+                            mongoTemplate.save(device);
+                            modifiedCount++;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        errorDesc += String.format("Failed to update license on imei %s, reason: %s ", imei, e.getMessage());
+                    }
+                }
+            }
+            if (!errorDesc.equals(""))
+            {
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                response.setResponseErrorDesc(errorDesc);
+                response.setResponseData(String.format("Overall edited %s, failed %s ", modifiedCount, imeis.stream().count() - modifiedCount));
+            }
+            else
+            {
+                response.setResponseData("Updated successfully");
+                response.setResponseErrorDesc(null);
+                response.setResponseStatus(HttpStatus.OK.value());
+            }
+        }
+        catch(Exception e)
+        {
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: %s : %s ", e.getMessage(), e.getCause()));
+        }
         return response;
     }
 }
