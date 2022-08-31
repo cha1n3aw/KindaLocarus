@@ -33,7 +33,6 @@ public class CustomUser implements UserDetails
     @Field(USERNAME_FIELD)
     private String username; //username, unique
 
-    @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Field("PWD")
     private String password; //password is stored hashed
@@ -68,7 +67,6 @@ public class CustomUser implements UserDetails
     @Field("ANE")
     private Boolean accountNonExpired;
 
-    @JsonIgnore
     public ObjectId getId()
     {
         return this._id;
@@ -106,8 +104,7 @@ public class CustomUser implements UserDetails
     {
         this.roles = (HashSet<GrantedAuthority>)roles;
     }
-
-    @JsonIgnore
+    
     @Override
     public String getPassword()
     {

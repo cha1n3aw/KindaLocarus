@@ -200,6 +200,7 @@ public class CustomUserServiceImpl implements CustomUserService
                     try
                     {
                         CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
+                        customUser.setPassword(null);
                         if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
                         if (fields.contains("all")) customUsers.add(customUser);
                         else
