@@ -125,8 +125,11 @@ public class DeviceServiceImpl implements DeviceService
                 try
                 {
                     device.setId(null);
+                    if (device.getIssueDate().isAfter(device.getExpirationDate()))
+                        return new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect dates: 'Issue date' should precede 'Expiration date'");}};
                     mongoTemplate.indexOps(DEVICES_COLLECTION_NAME).ensureIndex(new Index(IMEI_FIELD, Sort.Direction.DESC).unique());
                     mongoTemplate.insert(device);
+                    checkDeviceLicense(device.getDeviceImei());
                 }
                 catch (Exception e)
                 {
@@ -166,6 +169,9 @@ public class DeviceServiceImpl implements DeviceService
                 {
                     Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(deviceUpdates.getDeviceImei())), Device.class, DEVICES_COLLECTION_NAME);
                     if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+                    if (device.getIssueDate() != null && device.getExpirationDate() != null && device.getIssueDate().isAfter(device.getExpirationDate()))
+                        return new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect dates: 'Issue date' should precede 'Expiration date'");}};
+
                     for (Field field : deviceUpdates.getClass().getDeclaredFields())
                     {
                         if(!(Objects.equals(field.getName(), "_id")))
@@ -185,6 +191,7 @@ public class DeviceServiceImpl implements DeviceService
                         }
                     }
                     mongoTemplate.save(device);
+                    checkDeviceLicense(device.getDeviceImei());
                 }
                 catch (Exception e)
                 {
