@@ -96,7 +96,7 @@ public class DeviceRawDataController
             if (imei == null || !imei.matches("[0-9]{9}")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
             if (!mode.equals("full") && !mode.equals("short")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct mode is required");}}, HttpStatus.OK);
             if (fromTime != null && toTime != null && toTime.isBefore(fromTime))
-                return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'to'");}}, HttpStatus.OK);;
+                return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'To'");}}, HttpStatus.OK);
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")) ||
                 mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(authentication.getName())), CustomUser.class, USERS_COLLECTION_NAME).getDevices().contains(imei))
                     return new ResponseEntity<>(deviceRawDataService.devicesGetTrack(imei, mode, fromTime, toTime), HttpStatus.OK);
