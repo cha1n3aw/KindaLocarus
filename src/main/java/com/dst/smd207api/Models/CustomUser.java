@@ -67,6 +67,7 @@ public class CustomUser implements UserDetails
     @Field("ANE")
     private Boolean accountNonExpired;
 
+    @JsonIgnore
     public ObjectId getId()
     {
         return this._id;
@@ -104,7 +105,7 @@ public class CustomUser implements UserDetails
     {
         this.roles = (HashSet<GrantedAuthority>)roles;
     }
-    
+
     @Override
     public String getPassword()
     {
