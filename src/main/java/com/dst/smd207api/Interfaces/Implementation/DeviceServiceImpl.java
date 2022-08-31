@@ -29,11 +29,40 @@ public class DeviceServiceImpl implements DeviceService
         this.mongoTemplate = mongoTemplate;
     }
 
+    public List<String> CheckDevicesLicenses(List<String> imeis) throws Exception
+    {
+        Device device;
+        List<String> activeImeis = new ArrayList<>();
+        for (String imei : imeis)
+        {
+            device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
+            if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
+            if (device.getLicenseActive())
+                if (device.getExpirationDate().isBefore(Instant.now()))
+                {
+                    device.setLicenseActive(false);
+                    mongoTemplate.save(device);
+                }
+                else activeImeis.add(imei);
+            else
+            {
+                if (device.getExpirationDate().isAfter(Instant.now()))
+                {
+                    device.setLicenseActive(true);
+                    mongoTemplate.save(device);
+                    activeImeis.add(imei);
+                }
+            }
+        }
+        return activeImeis;
+    }
+
     public Response<?> devicesGet(final List<String> imeis, final List<String> fields)
     {
         Response<HashSet<Device>> response = new Response<>();
         try
         {
+            List<String> activeImeis = CheckDevicesLicenses(imeis);
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
             HashSet<Device> devices = new HashSet<>();
@@ -42,7 +71,6 @@ public class DeviceServiceImpl implements DeviceService
                 try
                 {
                     Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                    if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
                     if (fields.contains("all")) devices.add(device);
                     else
                     {
@@ -85,16 +113,7 @@ public class DeviceServiceImpl implements DeviceService
         }
         return response;
     }
-    public Response<?> devicesGetPos(final List<String> imeis, final Instant fromTime, final Instant toTime)
-    {
-        Response<Device> response = new Response<>();
-        return response;
-    }
-    public Response<?> devicesGetTrack(final String imei, final Instant fromTime, final Instant toTime)
-    {
-        Response<Device> response = new Response<>();
-        return response;
-    }
+
     public Response<?> devicesAdd(final List<Device> newDevices)
     {
         Response<?> response = new Response();
