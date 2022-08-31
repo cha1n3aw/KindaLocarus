@@ -104,4 +104,5 @@ public class DeviceRawDataController
         }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
+    /* sorry.... im sad..... */
 }
