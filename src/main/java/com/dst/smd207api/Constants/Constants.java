@@ -14,5 +14,10 @@ public class Constants
     public static final String USER_ROLE = "USER";
     public static final String DEVICES_COLLECTION_NAME = "Devices";
     public static final String IMEI_FIELD = "IME";
-
+    public static final String PCB_VERSION_FIELD = "PCB";
+    public static final String SOFTWARE_VERSION_FIELD = "SWV";
+    public static final String LICENSE_ACTIVE_FIELD = "LAC";
+    public static final String ISSUE_DATE_FIELD = "ISD";
+    public static final String EXPIRATION_DATE_FIELD = "EXD";
+    public static final String DEVICE_DESCRIPTION_FIELD = "DES";
 }

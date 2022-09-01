@@ -75,7 +75,7 @@ public class DeviceServiceImpl implements DeviceService
                             Device tempDevice = new Device();
                             for (Field availableField : device.getClass().getDeclaredFields())
                             {
-                                if (!Objects.equals(availableField.getName(), "_id"))
+                                if (!Objects.equals(availableField.getName(), ID_FIELD))
                                 {
                                     Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
                                     if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
@@ -174,7 +174,7 @@ public class DeviceServiceImpl implements DeviceService
 
                     for (Field field : deviceUpdates.getClass().getDeclaredFields())
                     {
-                        if(!(Objects.equals(field.getName(), "_id")))
+                        if(!(Objects.equals(field.getName(), ID_FIELD)))
                         {
                             Object fieldObject = deviceUpdates.getClass().getMethod("get" + StringUtils.capitalize(field.getName()), null).invoke(deviceUpdates);
                             if (fieldObject != null)

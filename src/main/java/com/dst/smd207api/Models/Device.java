@@ -10,8 +10,7 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.time.Instant;
 
-import static com.dst.smd207api.Constants.Constants.DEVICES_COLLECTION_NAME;
-import static com.dst.smd207api.Constants.Constants.IMEI_FIELD;
+import static com.dst.smd207api.Constants.Constants.*;
 
 @Data
 @NoArgsConstructor
@@ -24,17 +23,17 @@ public class Device
     private @MongoId ObjectId _id;
     @Field(IMEI_FIELD)
     private String deviceImei;
-    @Field("PCB")
+    @Field(PCB_VERSION_FIELD)
     private String pcbRevision;
-    @Field("SWV")
+    @Field(SOFTWARE_VERSION_FIELD)
     private String softwareVersion;
-    @Field("LAC")
+    @Field(LICENSE_ACTIVE_FIELD)
     private Boolean licenseActive;
-    @Field("ISD")
+    @Field(ISSUE_DATE_FIELD)
     private Instant issueDate;
-    @Field("EXD")
+    @Field(EXPIRATION_DATE_FIELD)
     private Instant expirationDate;
-    @Field("DES")
+    @Field(DEVICE_DESCRIPTION_FIELD)
     private String deviceDescription;
 
     @JsonIgnore

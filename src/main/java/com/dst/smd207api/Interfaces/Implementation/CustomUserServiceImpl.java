@@ -140,7 +140,7 @@ public class CustomUserServiceImpl implements CustomUserService
                     /** TODO: migrate to an .update() method */
                     for (Field field : customUserUpdates.getClass().getDeclaredFields())
                     {
-                        if(!(Objects.equals(field.getName(), "_id")))
+                        if(!(Objects.equals(field.getName(), ID_FIELD)))
                         {
                             Object fieldObject = customUserUpdates.getClass().getMethod("get" + StringUtils.capitalize(field.getName()), null).invoke(customUserUpdates);
                             if (fieldObject != null)
@@ -208,7 +208,7 @@ public class CustomUserServiceImpl implements CustomUserService
                             CustomUser tempCustomUser = new CustomUser();
                             for (Field availableField : customUser.getClass().getDeclaredFields())
                             {
-                                if (!Objects.equals(availableField.getName(), "_id"))
+                                if (!Objects.equals(availableField.getName(), ID_FIELD))
                                 {
                                     String getterPrefix;
                                     if (Objects.equals(availableField.getType(), Boolean.class)) getterPrefix = "is";

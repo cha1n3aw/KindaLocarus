@@ -44,7 +44,6 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
         http
-                /** TODO: CHECK USER ACCESS TO getCurrent and editCurrent METHODS */
                 .httpBasic().and().formLogin(withDefaults())
                 .cors().and().csrf().disable()
                 .authorizeRequests()
@@ -54,14 +53,14 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
                 .antMatchers(HttpMethod.GET,"/api/devices.getPos").hasAnyAuthority("USER", "ADMIN")
                 .antMatchers(HttpMethod.GET,"/api/devices.getTrack").hasAnyAuthority("USER", "ADMIN")
 
-                .antMatchers(HttpMethod.GET,"/api/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.PATCH, "/api/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/api/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET,"/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.POST, "/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/**").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/**").hasAuthority("ADMIN")
                 .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
                 .and().headers().frameOptions().sameOrigin()
                 .and().authenticationProvider(authenticationProvider())
-                .sessionManagement().maximumSessions(5);
+                .sessionManagement().maximumSessions(2);
         return http.build();
     }
 
@@ -75,12 +74,6 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception
     {
         return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
-    public Authentication authentication()
-    {
-        return SecurityContextHolder.getContext().getAuthentication();
     }
 
     @Bean
