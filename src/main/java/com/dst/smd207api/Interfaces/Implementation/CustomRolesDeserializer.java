@@ -13,7 +13,6 @@ import java.util.*;
 
 public class CustomRolesDeserializer extends JsonDeserializer
 {
-
     @Override
     public Object deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException
     {
