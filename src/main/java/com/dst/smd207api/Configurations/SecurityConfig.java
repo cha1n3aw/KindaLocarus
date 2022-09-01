@@ -53,7 +53,6 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
                 .antMatchers(HttpMethod.GET,"/api/devices.getPos").hasAnyAuthority("USER", "ADMIN")
                 .antMatchers(HttpMethod.GET,"/api/devices.getTrack").hasAnyAuthority("USER", "ADMIN")
 
-                
                 .antMatchers(HttpMethod.GET,"/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.POST, "/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.PATCH, "/**").hasAuthority("ADMIN")
@@ -81,6 +80,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     public DaoAuthenticationProvider authenticationProvider()
     {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setHideUserNotFoundExceptions(false);
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;

@@ -68,7 +68,7 @@ public class DeviceRawDataController
             List<String> devices;
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
             {
-                devices = new ArrayList<>(mongoTemplate.getCollectionNames().stream().filter(name -> name.matches("[0-9]{9}")).collect(Collectors.toList()));
+                devices = new ArrayList<>(mongoTemplate.getCollectionNames().stream().filter(name -> name.matches("[0-9]{15}")).collect(Collectors.toList()));
                 if (!imeis.contains("all")) devices.retainAll(imeis);
             }
             else
@@ -93,7 +93,7 @@ public class DeviceRawDataController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
         {
-            if (imei == null || !imei.matches("[0-9]{9}")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
+            if (imei == null || !imei.matches("[0-9]{15}")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
             if (!mode.equals("full") && !mode.equals("short")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct mode is required");}}, HttpStatus.OK);
             if (fromTime != null && toTime != null && toTime.isBefore(fromTime))
                 return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'To'");}}, HttpStatus.OK);
@@ -104,5 +104,4 @@ public class DeviceRawDataController
         }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }
-    /* sorry.... im sad..... */
 }
