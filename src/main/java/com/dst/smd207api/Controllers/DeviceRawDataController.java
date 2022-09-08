@@ -73,7 +73,7 @@ public class DeviceRawDataController
             {
                 return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: format should be YYYY-MM-DDT00:00:00Z");}}, HttpStatus.OK);
             }
-            if (imeis == null || imeis.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEIs: at least one correct IMEI required");}}, HttpStatus.OK);
+            if (imeis == null || imeis.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEIs: at least one correct IMEI is required");}}, HttpStatus.OK);
             if (!mode.equals("full") && !mode.equals("short")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect mode: should be 'short' or 'full'");}}, HttpStatus.OK);
             if (fromTime != null && toTime != null && fromTime.isAfter(toTime)) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'to'");}}, HttpStatus.OK);;
             List<Long> devices = new ArrayList<>();
@@ -112,7 +112,7 @@ public class DeviceRawDataController
                     devices.retainAll(longImeis);
                 }
             }
-            if (devices == null || devices.stream().count() == 0 ) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEIs: at least one correct IMEI required");}}, HttpStatus.OK);
+            if (devices == null || devices.stream().count() == 0 ) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEIs: at least one correct IMEI is required");}}, HttpStatus.OK);
             else return new ResponseEntity<>(deviceRawDataService.devicesGetPos(devices, mode, fromTime, toTime), HttpStatus.OK);
         }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
