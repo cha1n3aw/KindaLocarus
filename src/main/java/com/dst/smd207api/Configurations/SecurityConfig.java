@@ -44,23 +44,24 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
     {
         http
-                .httpBasic().and().formLogin(withDefaults())
-                .cors().and().csrf().disable()
-                .authorizeRequests()
-                .antMatchers(HttpMethod.GET,"/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
-                .antMatchers(HttpMethod.PATCH,"/api/users.editCurrent").hasAnyAuthority("USER", "ADMIN")
-                .antMatchers(HttpMethod.GET,"/api/devices.get").hasAnyAuthority("USER", "ADMIN")
-                .antMatchers(HttpMethod.GET,"/api/devices.getPos").hasAnyAuthority("USER", "ADMIN")
-                .antMatchers(HttpMethod.GET,"/api/devices.getTrack").hasAnyAuthority("USER", "ADMIN")
+            .httpBasic().and().formLogin(withDefaults())
+            .cors().and().csrf().disable()
+            .authorizeRequests()
+            .antMatchers(HttpMethod.GET,"/api/users.getCurrent").hasAnyAuthority("USER", "ADMIN")
+            .antMatchers(HttpMethod.PATCH,"/api/users.editCurrent").hasAnyAuthority("USER", "ADMIN")
+            .antMatchers(HttpMethod.GET,"/api/devices.get").hasAnyAuthority("USER", "ADMIN")
+            .antMatchers(HttpMethod.GET,"/api/devices.getPos").hasAnyAuthority("USER", "ADMIN")
+            .antMatchers(HttpMethod.GET,"/api/devices.getTrack").hasAnyAuthority("USER", "ADMIN")
+            .antMatchers(HttpMethod.GET,"/accessDenied").hasAnyAuthority("USER", "ADMIN")
 
-                .antMatchers(HttpMethod.GET,"/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.POST, "/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.PATCH, "/**").hasAuthority("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/**").hasAuthority("ADMIN")
-                .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
-                .and().headers().frameOptions().sameOrigin()
-                .and().authenticationProvider(authenticationProvider())
-                .sessionManagement().maximumSessions(2);
+            .antMatchers(HttpMethod.GET,"/**").hasAuthority("ADMIN")
+            .antMatchers(HttpMethod.POST, "/**").hasAuthority("ADMIN")
+            .antMatchers(HttpMethod.PATCH, "/**").hasAuthority("ADMIN")
+            .antMatchers(HttpMethod.DELETE, "/**").hasAuthority("ADMIN")
+            .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler())
+            .and().headers().frameOptions().sameOrigin()
+            .and().authenticationProvider(authenticationProvider())
+            .sessionManagement().maximumSessions(2);
         return http.build();
     }
 

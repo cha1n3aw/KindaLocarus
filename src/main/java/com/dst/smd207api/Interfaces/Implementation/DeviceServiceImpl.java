@@ -29,7 +29,7 @@ public class DeviceServiceImpl implements DeviceService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Boolean checkDeviceLicense(String imei) throws Exception
+    public Boolean checkDeviceLicense(Long imei) throws Exception
     {
         Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
         if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
@@ -53,7 +53,7 @@ public class DeviceServiceImpl implements DeviceService
         }
     }
 
-    public Response<?> devicesGet(final List<String> imeis, final List<String> fields)
+    public Response<?> devicesGet(final List<Long> imeis, final List<String> fields)
     {
         Response<HashSet<Object>> response = new Response<>();
         try
@@ -61,7 +61,7 @@ public class DeviceServiceImpl implements DeviceService
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
             HashSet<Object> devices = new HashSet<>();
-            for (String imei : imeis)
+            for (Long imei : imeis)
             {
                 try
                 {
@@ -127,6 +127,10 @@ public class DeviceServiceImpl implements DeviceService
                     device.setId(null);
                     if (device.getIssueDate().isAfter(device.getExpirationDate()))
                         return new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect dates: 'Issue date' should precede 'Expiration date'");}};
+                    if (device.getDeviceImei() < 100000000000000L || device.getDeviceImei() > 999999999999999L)
+                        return new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEI: IMEI should be exactly 15 numbers long");}};
+                    if (mongoTemplate.exists(Query.query(Criteria.where(IMEI_FIELD).is(device.getDeviceImei())), DEVICES_COLLECTION_NAME))
+                        return new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect IMEI: device with such IMEI already exists");}};
                     mongoTemplate.indexOps(DEVICES_COLLECTION_NAME).ensureIndex(new Index(IMEI_FIELD, Sort.Direction.DESC).unique());
                     mongoTemplate.insert(device);
                     checkDeviceLicense(device.getDeviceImei());
@@ -218,14 +222,14 @@ public class DeviceServiceImpl implements DeviceService
         }
         return response;
     }
-    public Response<?> devicesDelete(final List<String> imeisToDelete)
+    public Response<?> devicesDelete(final List<Long> imeisToDelete)
     {
         Response<Device> response = new Response<>();
         System.out.println("Deleted :)");
         return response;
     }
 
-    public Response<?> devicesProlongLicense(final List<String> imeis, Instant issueDate, Instant expirationDate)
+    public Response<?> devicesProlongLicense(final List<Long> imeis, Instant issueDate, Instant expirationDate)
     {
         Response<String> response = new Response<>();
         String errorDesc = "";
@@ -243,7 +247,7 @@ public class DeviceServiceImpl implements DeviceService
                 }
             else
             {
-                for (String imei : imeis)
+                for (Long imei : imeis)
                 {
                     try
                     {

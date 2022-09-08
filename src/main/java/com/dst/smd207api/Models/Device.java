@@ -22,7 +22,7 @@ public class Device
     @Setter(AccessLevel.NONE)
     private @MongoId ObjectId _id;
     @Field(IMEI_FIELD)
-    private String deviceImei;
+    private Long deviceImei;
     @Field(PCB_VERSION_FIELD)
     private String pcbRevision;
     @Field(SOFTWARE_VERSION_FIELD)

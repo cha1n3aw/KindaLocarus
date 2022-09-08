@@ -1,6 +1,5 @@
 package com.dst.smd207api.Interfaces.Implementation;
 
-import com.dst.smd207api.Models.Coordinates;
 import com.dst.smd207api.Models.Device;
 import com.dst.smd207api.Models.Packet;
 import com.dst.smd207api.Models.Response;
@@ -31,7 +30,7 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Boolean checkDeviceLicense(String imei) throws Exception
+    public Boolean checkDeviceLicense(Long imei) throws Exception
     {
         Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
         if (device == null) throw new Exception("Unable to find specified device! ", new Throwable("DEVICE_NOTFOUND"));
@@ -55,15 +54,15 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         }
     }
 
-    public Response<?> devicesGetPos(final List<String> imeis, final String mode, final Instant fromTime, final Instant toTime)
+    public Response<?> devicesGetPos(final List<Long> imeis, final String mode, final Instant fromTime, final Instant toTime)
     {
-        Response<Map<String, Map<Instant, Object>>> response = new Response<>();
+        Response<Map<Long, Map<Instant, Object>>> response = new Response<>();
         try
         {
             int errorsCount = 0;
             String errorDesc = "";
-            Map<String, Map<Instant, Object>> imeiResponse = new HashMap<>();
-            for (String imei : imeis)
+            Map<Long, Map<Instant, Object>> imeiResponse = new HashMap<>();
+            for (Long imei : imeis)
             {
                 SortedMap<Instant, Object> coordinates = new TreeMap<>();
                 try
@@ -74,19 +73,19 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                         Packet packet;
                         if (fromTime != null)
                         {
-                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei);
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.ASC, "TIM")), Packet.class, imei.toString());
                             if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                             else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                         if (toTime != null)
                         {
-                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").gte(fromTime)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei.toString());
                             if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                             else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                         else if (fromTime == null)
                         {
-                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                            packet = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei.toString());
                             if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                             else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
@@ -121,12 +120,12 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
         return response;
     }
 
-    public Response<?> devicesGetTrack(final String imei, final String mode, Instant fromTime, Instant toTime)
+    public Response<?> devicesGetTrack(final Long imei, final String mode, Instant fromTime, Instant toTime)
     {
-        Response<Map<String, Map<Instant, Object>>> response = new Response<>();
+        Response<Map<Long, Map<Instant, Object>>> response = new Response<>();
         try
         {
-            Map<String, Map<Instant, Object>> imeiResponse = new HashMap<>();
+            Map<Long, Map<Instant, Object>> imeiResponse = new HashMap<>();
             SortedMap<Instant, Object> coordinates = new TreeMap<>();
             try
             {
@@ -135,28 +134,28 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                 {
                     if (fromTime != null)
                         if (toTime != null)
-                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei))
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(toTime)), Packet.class, imei.toString()))
                             {
                                 if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                                 else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                             }
                         else
-                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei))
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei.toString()))
                             {
                                 if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                                 else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                             }
                     else if (toTime != null)
-                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(30, ChronoUnit.DAYS)).lte(toTime)), Packet.class, imei))
+                        for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(toTime.minus(30, ChronoUnit.DAYS)).lte(toTime)), Packet.class, imei.toString()))
                         {
                             if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                             else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
                         }
                     else
                     {
-                        Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei);
+                        Packet lastPacket = mongoTemplate.findOne(Query.query(Criteria.where("TIM").ne(null)).limit(1).with(Sort.by(Sort.Direction.DESC, "TIM")), Packet.class, imei.toString());
                         if (lastPacket != null)
-                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(30, ChronoUnit.DAYS))), Packet.class, imei))
+                            for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(lastPacket.getTimestamp().minus(30, ChronoUnit.DAYS))), Packet.class, imei.toString()))
                             {
                                 if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
                                 else coordinates.put(packet.getTimestamp(), packet.getCoordinates());

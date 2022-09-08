@@ -46,7 +46,7 @@ public class CustomUser implements UserDetails
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     @Setter(AccessLevel.NONE)
     @Field("DVC")
-    private HashSet<String> devices; //list of imeis of owned devices
+    private HashSet<Long> devices; //list of imeis of owned devices
 
     @Field("DSC")
     private String description; //user description string, accessible only to admin
@@ -80,7 +80,7 @@ public class CustomUser implements UserDetails
 
     public void setDevices(Object devices)
     {
-        this.devices = (HashSet<String>) devices;
+        this.devices = (HashSet<Long>) devices;
     }
 
     @JsonIgnore

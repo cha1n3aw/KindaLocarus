@@ -51,7 +51,6 @@ public class CustomUserServiceImpl implements CustomUserService
                     if (customUser.getPassword() != null && customUser.getPassword().length() >= 6 && customUser.getPassword().length() <=32)
                         customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
                     else throw new Exception(String.format("Incorrect password length! "), new Throwable("PASSWORD_INCOMPATIBLE"));
-                    customUser.setPassword(bCryptPasswordEncoder.encode(customUser.getPassword()));
                     mongoTemplate.indexOps(USERS_COLLECTION_NAME).ensureIndex(new Index(USERNAME_FIELD, Sort.Direction.DESC).unique());
                     mongoTemplate.save(customUser);
                 }

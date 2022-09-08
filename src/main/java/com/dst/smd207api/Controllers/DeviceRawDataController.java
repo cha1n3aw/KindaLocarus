@@ -65,16 +65,27 @@ public class DeviceRawDataController
             if (imeis == null || imeis.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
             if (!mode.equals("full") && !mode.equals("short")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct mode is required");}}, HttpStatus.OK);
             if (fromTime != null && toTime != null && fromTime.isAfter(toTime)) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'to'");}}, HttpStatus.OK);;
-            List<String> devices;
+            List<Long> devices = new ArrayList<>();
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
             {
-                devices = new ArrayList<>(mongoTemplate.getCollectionNames().stream().filter(name -> name.matches("[0-9]{15}")).collect(Collectors.toList()));
-                if (!imeis.contains("all")) devices.retainAll(imeis);
+                List<String> tempDevices = new ArrayList<>(mongoTemplate.getCollectionNames().stream().filter(name -> name.matches("[0-9]{15}")).collect(Collectors.toList()));
+                for (String dev : tempDevices) devices.add(Long.parseLong(dev));
+                if (!imeis.contains("all"))
+                {
+                    List<Long> longImeis = new ArrayList<>();
+                    for (String dev : imeis) longImeis.add(Long.parseLong(dev));
+                    devices.retainAll(longImeis);
+                }
             }
             else
             {
                 devices = new ArrayList<>(mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(authentication.getName())), CustomUser.class, USERS_COLLECTION_NAME).getDevices());
-                if (!imeis.contains("all")) devices.retainAll(imeis);
+                if (!imeis.contains("all"))
+                {
+                    List<Long> longImeis = new ArrayList<>();
+                    for (String dev : imeis) longImeis.add(Long.parseLong(dev));
+                    devices.retainAll(longImeis);
+                }
             }
             if (devices == null || devices.stream().count() == 0 ) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
             else return new ResponseEntity<>(deviceRawDataService.devicesGetPos(devices, mode, fromTime, toTime), HttpStatus.OK);
@@ -85,7 +96,7 @@ public class DeviceRawDataController
     @GetMapping("/devices.getTrack")
     @ResponseBody
     public ResponseEntity<Response<?>> devicesGetTrack(
-            @RequestParam(required = true, name="imei", defaultValue = "") String imei,
+            @RequestParam(required = true, name="imei", defaultValue = "") Long imei,
             @RequestParam(required = false, name="mode", defaultValue = "short") String mode,
             @RequestParam(required = false, name="from") Instant fromTime,
             @RequestParam(required = false, name="to") Instant toTime)
@@ -93,7 +104,7 @@ public class DeviceRawDataController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
         {
-            if (imei == null || !imei.matches("[0-9]{15}")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
+            if (imei == null || imei < 100000000000000L || imei > 999999999999999L) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct IMEIs are required");}}, HttpStatus.OK);
             if (!mode.equals("full") && !mode.equals("short")) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Correct mode is required");}}, HttpStatus.OK);
             if (fromTime != null && toTime != null && toTime.isBefore(fromTime))
                 return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("Incorrect timestamps: 'From' should precede 'To'");}}, HttpStatus.OK);

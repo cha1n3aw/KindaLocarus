@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface DeviceService
 {
-    Response<?> devicesGet(final List<String> imeis, final List<String> fields);
-    Response<?> devicesProlongLicense(final List<String> imeis, final Instant issueDate, final Instant expirationDate);
+    Response<?> devicesGet(final List<Long> imeis, final List<String> fields);
+    Response<?> devicesProlongLicense(final List<Long> imeis, final Instant issueDate, final Instant expirationDate);
     Response<?> devicesAdd(final List<Device> newDevices);
     Response<?> devicesEdit(final List<Device> updatedDevices);
-    Response<?> devicesDelete(final List<String> imeisToDelete);
+    Response<?> devicesDelete(final List<Long> imeisToDelete);
 }

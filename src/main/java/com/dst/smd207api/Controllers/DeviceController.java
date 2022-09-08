@@ -54,16 +54,21 @@ public class DeviceController
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
         {
             if (imeis == null || fields == null || imeis.stream().count() == 0 || fields.stream().count() == 0) return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.BAD_REQUEST.value()); setResponseErrorDesc("IMEIs and fields are required");}}, HttpStatus.OK);
-            List<String> devices = new ArrayList<>();
+            List<Long> devices = new ArrayList<>();
             if (authentication.getAuthorities().stream().anyMatch(c -> c.getAuthority().equals("ADMIN")))
             {
                 if (imeis.contains("all")) for (Device device : mongoTemplate.findAll(Device.class, DEVICES_COLLECTION_NAME)) devices.add(device.getDeviceImei());
-                else devices = imeis;
+                else for (String dev : imeis) devices.add(Long.parseLong(dev));
             }
             else
             {
                 devices = new ArrayList<>(mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(authentication.getName())), CustomUser.class, USERS_COLLECTION_NAME).getDevices());
-                if (!imeis.contains("all")) devices.retainAll(imeis);
+                if (!imeis.contains("all"))
+                {
+                    List<Long> longImeis = new ArrayList<>();
+                    for (String dev : imeis) longImeis.add(Long.parseLong(dev));
+                    devices.retainAll(longImeis);
+                }
             }
             return new ResponseEntity<>(deviceService.devicesGet(devices, fields), HttpStatus.OK);
         }
@@ -91,7 +96,7 @@ public class DeviceController
     }
 
     @DeleteMapping("/devices.delete")
-    public ResponseEntity<Response<?>> DevicesDelete(@RequestParam(required = true, name="imeis") List<String> imeis)
+    public ResponseEntity<Response<?>> DevicesDelete(@RequestParam(required = true, name="imeis") List<Long> imeis)
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.getAuthorities() != null)
@@ -103,7 +108,7 @@ public class DeviceController
     @GetMapping("/devices.prolongLicense")
     @ResponseBody
     public ResponseEntity<Response<?>> DevicesProlongLicense(
-            @RequestParam(required = true, name="imeis", defaultValue = "") List<String> imeis,
+            @RequestParam(required = true, name="imeis", defaultValue = "") List<Long> imeis,
             @RequestParam(required = true, name="issueDate", defaultValue = "") Instant issueDate,
             @RequestParam(required = true, name="expirationDate", defaultValue = "") Instant expirationDate)
     {
