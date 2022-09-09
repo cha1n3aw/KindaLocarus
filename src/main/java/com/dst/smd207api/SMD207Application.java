@@ -24,7 +24,7 @@ public class SMD207Application
             String mongoAddress = InetAddress.getByName(MONGODB_HOSTNAME).getHostAddress();
             if (!DB_ADDRESS.equals(mongoAddress))
             {
-                DB_ADDRESS = mongoAddress;
+                mongoAddress = DB_ADDRESS;
                 log.info(String.format("Found an explicit MongoDb address (via hostname '%s') : %s", MONGODB_HOSTNAME, mongoAddress));
             }
         }

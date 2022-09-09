@@ -1,6 +1,7 @@
 package com.dst.smd207api.Interfaces.Implementation;
 
 import com.dst.smd207api.Interfaces.Services.DeviceService;
+import com.dst.smd207api.Models.CustomUser;
 import com.dst.smd207api.Models.Device;
 import com.dst.smd207api.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,21 +56,21 @@ public class DeviceServiceImpl implements DeviceService
 
     public Response<?> devicesGet(final List<Long> imeis, final List<String> fields)
     {
-        Response<HashSet<Object>> response = new Response<>();
+        Response<Map<Long, Object>> response = new Response<>();
         try
         {
             int errorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
-            HashSet<Object> devices = new HashSet<>();
+            Map<Long, Object> devices = new HashMap<>();
             for (Long imei : imeis)
             {
                 try
                 {
-                    if (!checkDeviceLicense(imei)) devices.add(String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
+                    if (!checkDeviceLicense(imei)) devices.put(imei, String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
                     else
                     {
                         Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                        if (fields.contains("all")) devices.add(device);
+                        if (fields.contains("all")) devices.put(imei, device);
                         else
                         {
                             Device tempDevice = new Device();
@@ -81,7 +82,7 @@ public class DeviceServiceImpl implements DeviceService
                                     if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
                                 }
                             }
-                            devices.add(tempDevice);
+                            devices.put(imei, tempDevice);
                         }
                     }
                 }
@@ -102,7 +103,7 @@ public class DeviceServiceImpl implements DeviceService
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc(null);
             }
-            if (devices != null && devices.stream().count() > 0) response.setResponseData(devices);
+            if (devices != null && devices.size() > 0) response.setResponseData(devices);
             else response.setResponseData(null);
         }
         catch (Exception e)
@@ -224,7 +225,42 @@ public class DeviceServiceImpl implements DeviceService
     }
     public Response<?> devicesDelete(final List<Long> imeisToDelete)
     {
-        Response<Device> response = new Response<>();
+        Response<?> response = new Response();
+        try
+        {
+            int errorsCount = 0;
+            String errorDesc = "";
+            for (Long imei : imeisToDelete)
+            {
+                try
+                {
+                    Query query = Query.query(Criteria.where(IMEI_FIELD).is(imei));
+                    if (!mongoTemplate.exists(query, DEVICES_COLLECTION_NAME)) throw new Exception(String.format("Unable to locate device '%s'! ", imei), new Throwable("DEVICE_NOTFOUND"));
+                    mongoTemplate.findAndRemove(query, Device.class);
+                }
+                catch (Exception e)
+                {
+                    errorsCount++;
+                    errorDesc += String.format("Failed to delete '%s', reason: '%s' : '%s' ", imei, e.getMessage(), e.getCause());
+                }
+            }
+            if (!Objects.equals(errorDesc, ""))
+            {
+                errorDesc += String.format("Overall deleted '%s', failed '%s' ", imeisToDelete.stream().count() - errorsCount, errorsCount);
+                response.setResponseStatus(HttpStatus.EXPECTATION_FAILED.value());
+                response.setResponseErrorDesc(errorDesc);
+            }
+            else
+            {
+                response.setResponseStatus(HttpStatus.OK.value());
+                response.setResponseErrorDesc(null);
+            }
+        }
+        catch(Exception e)
+        {
+            response.setResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.setResponseErrorDesc(String.format("Internal server error, reason: '%s' : '%s' ", e.getMessage(), e.getCause()));
+        }
         return response;
     }
 

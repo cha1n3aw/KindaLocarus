@@ -53,10 +53,10 @@ public class CustomUserController
                 admin.setPassword(bCryptPasswordEncoder.encode("admin"));
                 admin.setAuthorities(grantedAuthorities);
                 admin.setDescription("This is superadmin account");
-                admin.setEnabled(true);
-                admin.setAccountNonExpired(true);
-                admin.setAccountNonLocked(true);
-                admin.setCredentialsNonExpired(true);
+                admin.setAccEnabled(true);
+                admin.setAccNonExpired(true);
+                admin.setAccNonLocked(true);
+                admin.setCrdNonExpired(true);
                 admin.setDevices(new HashSet<>(){{add("0");}});
                 mongoTemplate.insert(admin);
             }
@@ -133,9 +133,9 @@ public class CustomUserController
             {
                 if (usernames.contains("all")) for (CustomUser customUser : mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME)) requestedUsernames.add(customUser.getUsername());
                 else requestedUsernames = usernames;
+                return new ResponseEntity<>(customUserService.usersGet(requestedUsernames, fields), HttpStatus.OK);
             }
             else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.FORBIDDEN.value()); setResponseErrorDesc("Forbidden");}}, HttpStatus.OK);
-            return new ResponseEntity<>(customUserService.usersGet(requestedUsernames, fields), HttpStatus.OK);
         }
         else return new ResponseEntity<>(new Response<>(){{setResponseStatus(HttpStatus.UNAUTHORIZED.value()); setResponseErrorDesc("Unauthorized");}}, HttpStatus.OK);
     }

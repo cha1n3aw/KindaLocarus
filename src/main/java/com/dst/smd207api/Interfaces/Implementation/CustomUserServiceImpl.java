@@ -136,7 +136,6 @@ public class CustomUserServiceImpl implements CustomUserService
                     Query query = Query.query(Criteria.where(USERNAME_FIELD).is(customUserUpdates.getUsername()));
                     CustomUser customUser = mongoTemplate.findOne(query, CustomUser.class, USERS_COLLECTION_NAME);
                     if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", customUserUpdates.getUsername()), new Throwable("USER_NOTFOUND"));
-                    /** TODO: migrate to an .update() method */
                     for (Field field : customUserUpdates.getClass().getDeclaredFields())
                     {
                         if(!(Objects.equals(field.getName(), ID_FIELD)))
@@ -184,12 +183,11 @@ public class CustomUserServiceImpl implements CustomUserService
 
     public Response<?> usersGet(final List<String> usernames, final List<String> fields)
     {
-        Response<HashSet> response = new Response<>();
+        Response<HashSet<CustomUser>> response = new Response<>();
         try
         {
             int userErrorsCount = 0, totalFieldsErrorCount = 0;
             String errorDesc = "";
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             HashSet<CustomUser> customUsers = new HashSet<>();
             if (usernames == null) customUsers.addAll(mongoTemplate.findAll(CustomUser.class, USERS_COLLECTION_NAME));
             else
@@ -199,19 +197,17 @@ public class CustomUserServiceImpl implements CustomUserService
                     try
                     {
                         CustomUser customUser = mongoTemplate.findOne(Query.query(Criteria.where(USERNAME_FIELD).is(username)), CustomUser.class, USERS_COLLECTION_NAME);
-                        customUser.setPassword(null);
                         if (customUser == null) throw new Exception(String.format("Unable to locate user '%s'! ", username), new Throwable("USER_NOTFOUND"));
+                        customUser.setPassword(null);
                         if (fields.contains("all")) customUsers.add(customUser);
                         else
                         {
                             CustomUser tempCustomUser = new CustomUser();
-                            for (Field availableField : customUser.getClass().getDeclaredFields())
+                            for (Field availableField : tempCustomUser.getClass().getDeclaredFields())
                             {
-                                if (!Objects.equals(availableField.getName(), ID_FIELD))
+                                if (!Objects.equals(availableField.getName(), ID_FIELD) && !Objects.equals(availableField.getName(), "password"))
                                 {
-                                    String getterPrefix;
-                                    if (Objects.equals(availableField.getType(), Boolean.class)) getterPrefix = "is";
-                                    else getterPrefix = "get";
+                                    String getterPrefix = "get";
                                     Object fieldObject = customUser.getClass().getMethod(getterPrefix + StringUtils.capitalize(availableField.getName()), null).invoke(customUser);
                                     Class[] methodArgs = new Class[1];
                                     if (Objects.equals(fieldObject.getClass(), LinkedHashSet.class)) methodArgs[0] = Object.class;
@@ -219,6 +215,7 @@ public class CustomUserServiceImpl implements CustomUserService
                                     if (fields.contains(availableField.getName())) tempCustomUser.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), methodArgs).invoke(tempCustomUser, fieldObject);
                                 }
                             }
+                            tempCustomUser.setPassword(null);
                             customUsers.add(tempCustomUser);
                         }
                     }
@@ -240,7 +237,7 @@ public class CustomUserServiceImpl implements CustomUserService
                 response.setResponseStatus(HttpStatus.OK.value());
                 response.setResponseErrorDesc(null);
             }
-            if (customUsers != null && customUsers.stream().count() > 0) response.setResponseData(customUsers);
+            if ((long)customUsers.size() > 0) response.setResponseData(customUsers);
             else response.setResponseData(null);
         }
         catch (Exception e)

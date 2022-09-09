@@ -16,8 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.HashSet;
 import java.util.Objects;
 
-import static com.dst.smd207api.Constants.Constants.USERNAME_FIELD;
-import static com.dst.smd207api.Constants.Constants.USERS_COLLECTION_NAME;
+import static com.dst.smd207api.Constants.Constants.*;
 
 @Data
 @NoArgsConstructor
@@ -34,7 +33,7 @@ public class CustomUser implements UserDetails
     private String username; //username, unique
 
     @Getter(AccessLevel.NONE)
-    @Field("PWD")
+    @Field(PASSWORD_FIELD)
     private String password; //password is stored hashed
 
     @Getter(AccessLevel.NONE)
@@ -51,21 +50,17 @@ public class CustomUser implements UserDetails
     @Field("DSC")
     private String description; //user description string, accessible only to admin
 
-    @Getter(AccessLevel.NONE)
     @Field("AEN")
-    private Boolean enabled;
+    private Boolean accEnabled;
 
-    @Getter(AccessLevel.NONE)
     @Field("ANL")
-    private Boolean accountNonLocked;
+    private Boolean accNonLocked;
 
-    @Getter(AccessLevel.NONE)
     @Field("CNE")
-    private Boolean credentialsNonExpired;
+    private Boolean crdNonExpired;
 
-    @Getter(AccessLevel.NONE)
     @Field("ANE")
-    private Boolean accountNonExpired;
+    private Boolean accNonExpired;
 
     @JsonIgnore
     public ObjectId getId()
@@ -118,34 +113,6 @@ public class CustomUser implements UserDetails
         return this.username;
     }
 
-//    @JsonIgnore
-    @Override
-    public boolean isAccountNonExpired()
-    {
-        return this.accountNonExpired;
-    }
-
-//    @JsonIgnore
-    @Override
-    public boolean isAccountNonLocked()
-    {
-        return this.accountNonLocked;
-    }
-
-//    @JsonIgnore
-    @Override
-    public boolean isCredentialsNonExpired()
-    {
-        return this.credentialsNonExpired;
-    }
-
-//    @JsonIgnore
-    @Override
-    public boolean isEnabled()
-    {
-        return this.enabled;
-    }
-
     @Override
     public int hashCode()
     {
@@ -160,4 +127,29 @@ public class CustomUser implements UserDetails
         CustomUser user = (CustomUser) o;
         return Objects.equals(username, user.username);
     }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonExpired()
+    {
+        return this.accNonExpired;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonLocked()
+    {
+        return this.accNonLocked;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCredentialsNonExpired()
+    {
+        return this.crdNonExpired;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isEnabled() { return this.accEnabled; }
 }

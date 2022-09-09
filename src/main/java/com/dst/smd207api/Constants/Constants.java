@@ -9,6 +9,7 @@ public class Constants
     public static final String USERS_COLLECTION_NAME = "Users";
     public static final String ID_FIELD = "_id";
     public static final String USERNAME_FIELD = "UNM";
+    public static final String PASSWORD_FIELD = "PWD";
     public static final String SUPERADMIN_ROLE = "SUPERADMIN";
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String USER_ROLE = "USER";
