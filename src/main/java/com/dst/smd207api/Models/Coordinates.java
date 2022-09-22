@@ -11,12 +11,12 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class Coordinates
 {
     @Field("LON")
-    private double lon;
+    private Double lon;
     @Field("LAT")
-    private double lat;
+    private Double lat;
     @Field("ALT")
-    private double alt;
+    private Double alt;
     @Field("VEL")
-    private double velocity;
+    private Double velocity;
 }
 

@@ -19,17 +19,13 @@ public class Packet
     @Field("TIM")
     private Instant timestamp;
     @Field("VLT")
-    private double measuredVoltage;
+    private Double measuredVoltage;
     @Field("FLG")
-    private byte stateFlags;
+    private Byte stateFlags;
     @Field("UCH")
-    private int usedChannels;
+    private Integer usedChannels;
     @Field("ACH")
     private Map<Integer, Integer> analogChannels;
     @Field("CRD")
     private Coordinates coordinates;
-    @Field("GPS")
-    private int gpsSatCount;
-    @Field("GLS")
-    private int glonassSatCount;
 }
