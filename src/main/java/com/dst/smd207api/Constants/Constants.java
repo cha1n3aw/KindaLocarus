@@ -21,4 +21,5 @@ public class Constants
     public static final String ISSUE_DATE_FIELD = "ISD";
     public static final String EXPIRATION_DATE_FIELD = "EXD";
     public static final String DEVICE_DESCRIPTION_FIELD = "DES";
+    public static final String LAST_ACTIVITY_FIELD = "ACT";
 }

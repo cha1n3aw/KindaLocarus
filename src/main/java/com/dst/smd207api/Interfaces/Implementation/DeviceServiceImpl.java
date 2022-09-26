@@ -3,6 +3,7 @@ package com.dst.smd207api.Interfaces.Implementation;
 import com.dst.smd207api.Interfaces.Services.DeviceService;
 import com.dst.smd207api.Models.CustomUser;
 import com.dst.smd207api.Models.Device;
+import com.dst.smd207api.Models.Packet;
 import com.dst.smd207api.Models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -70,19 +71,23 @@ public class DeviceServiceImpl implements DeviceService
                     else
                     {
                         Device device = mongoTemplate.findOne(Query.query(Criteria.where(IMEI_FIELD).is(imei)), Device.class, DEVICES_COLLECTION_NAME);
-                        if (fields.contains("all")) devices.put(imei, device);
-                        else
+                        if (device != null)
                         {
-                            Device tempDevice = new Device();
-                            for (Field availableField : device.getClass().getDeclaredFields())
+                            device.setLastActivity(mongoTemplate.findOne(Query.query(Criteria.where("timestamp").lte(Instant.now())), Packet.class, imei.toString()).getTimestamp());
+                            if (fields.contains("all")) devices.put(imei, device);
+                            else
                             {
-                                if (!Objects.equals(availableField.getName(), ID_FIELD))
+                                Device tempDevice = new Device();
+                                for (Field availableField : device.getClass().getDeclaredFields())
                                 {
-                                    Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
-                                    if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
+                                    if (!Objects.equals(availableField.getName(), ID_FIELD))
+                                    {
+                                        Object fieldObject = device.getClass().getMethod("get" + StringUtils.capitalize(availableField.getName()), null).invoke(device);
+                                        if (fields.contains(availableField.getName())) tempDevice.getClass().getMethod("set" + StringUtils.capitalize(availableField.getName()), new Class[]{fieldObject.getClass()}).invoke(tempDevice, fieldObject);
+                                    }
                                 }
+                                devices.put(imei, tempDevice);
                             }
-                            devices.put(imei, tempDevice);
                         }
                     }
                 }

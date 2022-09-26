@@ -35,6 +35,8 @@ public class Device
     private Instant expirationDate;
     @Field(DEVICE_DESCRIPTION_FIELD)
     private String deviceDescription;
+    @Field(LAST_ACTIVITY_FIELD)
+    private Instant lastActivity;
 
     @JsonIgnore
     public ObjectId getId()
