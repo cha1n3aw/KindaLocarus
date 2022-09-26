@@ -66,8 +66,10 @@ public class DeviceRawDataController
             Instant toTime;
             try
             {
-                fromTime = Instant.parse(objectFromTime);
-                toTime = Instant.parse(objectToTime);
+                if (objectFromTime == "" || objectFromTime == null) fromTime = null;
+                else fromTime = Instant.parse(objectFromTime);
+                if (objectToTime == "" || objectToTime == null) toTime = null;
+                else toTime = Instant.parse(objectToTime);
             }
             catch(Exception e)
             {
@@ -134,8 +136,10 @@ public class DeviceRawDataController
             Long imei;
             try
             {
-                fromTime = Instant.parse(objectFromTime);
-                toTime = Instant.parse(objectToTime);
+                if (objectFromTime == "" || objectFromTime == null) fromTime = null;
+                else fromTime = Instant.parse(objectFromTime);
+                if (objectToTime == "" || objectToTime == null) toTime = null;
+                else toTime = Instant.parse(objectToTime);
             }
             catch(Exception e)
             {

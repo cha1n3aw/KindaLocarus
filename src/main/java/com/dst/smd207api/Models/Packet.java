@@ -25,7 +25,10 @@ public class Packet
     @Field("UCH")
     private Integer usedChannels;
     @Field("ACH")
-    private Map<Integer, Integer> analogChannels;
+    private Map<Integer, Long> analogChannels;
     @Field("CRD")
     private Coordinates coordinates;
+    @Field("RSV")
+    private Integer reserve;
+
 }

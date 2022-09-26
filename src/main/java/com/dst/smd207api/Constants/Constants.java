@@ -2,7 +2,7 @@ package com.dst.smd207api.Constants;
 
 public class Constants
 {
-    public static String DB_ADDRESS = "192.168.212.192";
+    public static String DB_ADDRESS = "localhost" /*"192.168.212.192"*/;
     public static final String MONGODB_HOSTNAME = "DST-MONGO";
     public static final String DB_PORT = "27017";
     public static final String DB_NAME = "SMD207";
