@@ -132,12 +132,14 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
 
     public Response<?> devicesGetTrack(final Long imei, final String mode, Instant fromTime, Instant toTime)
     {
-        Response<Map<Long, List<Object>>> response = new Response<>();
+//        Response<Map<Long, List<Object>>> response = new Response<>();
+        Response<List<Object>> response = new Response<>();
         try
         {
-            Map<Long, List<Object>> imeiResponse = new HashMap<>();
+//            Map<Long, List<Object>> imeiResponse = new HashMap<>();
 //            SortedMap<Instant, Object> coordinates = new TreeMap<>();
             List<Object> coordinates = new ArrayList<>();
+            List<Object> imeiResponse = new ArrayList<>();
             try
             {
 //                if (!checkDeviceLicense(imei)) coordinates.put(Instant.now(), String.format("License for device with IMEI %s has expired, please, obtain a new one!", imei));
@@ -150,8 +152,8 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                             {
 //                                if (mode.equals("full")) coordinates.put(packet.getTimestamp(), packet);
 //                                else coordinates.put(packet.getTimestamp(), packet.getCoordinates());
-                                if (mode.equals("full")) coordinates.add(packet);
-                                else coordinates.add(packet.getCoordinates());
+                                if (mode.equals("full")) imeiResponse.add(packet);
+                                else imeiResponse.add(packet.getCoordinates());
                             }
                         else
                             for (Packet packet : mongoTemplate.find(Query.query(Criteria.where("TIM").gte(fromTime).lte(fromTime.plus(30, ChronoUnit.DAYS))), Packet.class, imei.toString()))
@@ -192,9 +194,10 @@ public class DeviceRawDataServiceImpl implements DeviceRawDataService
                 response.setResponseErrorDesc(String.format("Failed to fetch track on device %s, reason: %s : %s ", imei, e.getMessage(), e.getCause()));
                 response.setResponseData(null);
             }
-            if (coordinates.size() > 0)
+            if (imeiResponse.size() > 0)
             {
-                imeiResponse.put(imei, coordinates);
+//                imeiResponse.put(imei, coordinates);
+//                imeiResponse.add(coordinates);
                 response.setResponseData(imeiResponse);
             }
             else response.setResponseData(null);
